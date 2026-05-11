@@ -115,9 +115,32 @@ const Directions = ({ from, to, onRouteUpdate }) => {
   return <AnimatedPath path={path} />;
 };
 
+// Auto-zoom component to fit both points on screen
+const AutoZoom = ({ kioskLocation, destination }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !kioskLocation || !destination || !window.google) return;
+
+    const bounds = new window.google.maps.LatLngBounds();
+    bounds.extend({ lat: kioskLocation.lat, lng: kioskLocation.lng });
+    bounds.extend({ lat: destination.lat, lng: destination.lng });
+
+    // Fit map to show both points with padding (150px on all sides for the 4K display)
+    map.fitBounds(bounds, {
+      top: 200,
+      right: 200,
+      bottom: 200,
+      left: 200
+    });
+  }, [map, kioskLocation, destination]);
+
+  return null;
+};
+
 const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating, onRouteUpdate }) => {
-  const API_KEY = 'AIzaSyAfQFQiMteTxX7pQmb_GPhcIGRrONLmGZM'; 
-  const mapId = '83396a50aaf25eae2523302e'; // Your new Map ID
+  const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY; 
+  const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID; 
   const [mapTypeId, setMapTypeId] = useState('roadmap'); 
 
   const handleMapClick = (e) => {
@@ -150,6 +173,9 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
         >
           {/* Real-time Directions with Marching Ants */}
           <Directions from={kioskLocation} to={destination} onRouteUpdate={onRouteUpdate} />
+
+          {/* Auto-zoom when destination changes */}
+          <AutoZoom kioskLocation={kioskLocation} destination={destination} />
 
           {/* Kiosk Marker Overlay */}
           <AdvancedMarker position={{ lat: kioskLocation.lat, lng: kioskLocation.lng }}>
