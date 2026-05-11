@@ -126,12 +126,22 @@ const AutoZoom = ({ kioskLocation, destination }) => {
     bounds.extend({ lat: kioskLocation.lat, lng: kioskLocation.lng });
     bounds.extend({ lat: destination.lat, lng: destination.lng });
 
-    // Fit map to show both points with massive padding for maximum campus context
+    // Fit map to show both points with massive padding
     map.fitBounds(bounds, {
-      top: 800,
-      right: 800,
-      bottom: 800,
-      left: 800
+      top: 600,
+      right: 600,
+      bottom: 600,
+      left: 600
+    });
+
+    // FORCE BIRD'S EYE VIEW: If the map zooms in too close (above 15.5), pull it back to 15.5
+    // This ensures you always see the surrounding buildings.
+    const listener = map.addListener('zoom_changed', () => {
+      if (map.getZoom() > 15.5) {
+        map.setZoom(15.5);
+      }
+      // Remove listener immediately so it doesn't interfere with user scrolling
+      window.google.maps.event.removeListener(listener);
     });
   }, [map, kioskLocation, destination]);
 
