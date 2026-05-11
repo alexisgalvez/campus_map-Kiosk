@@ -126,12 +126,12 @@ const AutoZoom = ({ kioskLocation, destination }) => {
     bounds.extend({ lat: kioskLocation.lat, lng: kioskLocation.lng });
     bounds.extend({ lat: destination.lat, lng: destination.lng });
 
-    // Fit map to show both points with padding (150px on all sides for the 4K display)
+    // Fit map to show both points with very generous padding for 4K context
     map.fitBounds(bounds, {
-      top: 200,
-      right: 200,
-      bottom: 200,
-      left: 200
+      top: 450,
+      right: 450,
+      bottom: 450,
+      left: 450
     });
   }, [map, kioskLocation, destination]);
 
