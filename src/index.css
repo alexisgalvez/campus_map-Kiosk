@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --color-primary: #e62b1e;
+  --color-secondary: #000000;
+  --color-accent: #ffc107;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background-color: #0f172a;
+  color: white;
+  overflow: hidden;
+  touch-action: none; /* Prevent default browser pinch/zoom on touch */
+}
+
+/* Hide scrollbars for the kiosk */
+::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+.animate-dash {
+  animation: dash 1s linear infinite;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
