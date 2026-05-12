@@ -10,7 +10,7 @@ import {
 import { Navigation, MapPin, Sliders, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Custom OverlayView implementation for @vis.gl/react-google-maps
-const OverlayView = ({ position, children, pane = 'overlayLayer' }) => {
+const OverlayView = ({ position, children, pane = 'overlayMouseTarget' }) => {
   const map = useMap();
   const container = useMemo(() => document.createElement('div'), []);
 
@@ -316,7 +316,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           onClick={handleMapClick}
           onCameraChanged={(ev) => setMapInstance(ev.map)}
           disableDefaultUI={true}
-          gestureHandling={isCalibrating ? 'none' : 'greedy'}
+          gestureHandling="greedy"
         >
           {/* Advanced Rotatable Campus Overlay */}
           {overlayUrl && (
