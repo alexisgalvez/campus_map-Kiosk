@@ -7,7 +7,7 @@ import {
   useMapsLibrary,
   useMap
 } from '@vis.gl/react-google-maps';
-import { Navigation, MapPin, Sliders } from 'lucide-react';
+import { Navigation, MapPin, Sliders, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Custom OverlayView implementation for @vis.gl/react-google-maps
 const OverlayView = ({ position, children, pane = 'overlayLayer' }) => {
@@ -207,12 +207,36 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
   const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID; 
   const [mapTypeId, setMapTypeId] = useState('roadmap'); 
   const [is3D, setIs3D] = useState(false);
+  const map = useMap();
 
   // Custom Overlay State
   const overlayUrl = import.meta.env.VITE_CAMPUS_OVERLAY_URL;
   const [overlayWidth, setOverlayWidth] = useState(2500);
   const [overlayRotation, setOverlayRotation] = useState(0);
   const [overlayPos, setOverlayPos] = useState({ lat: 43.5309, lng: -80.2285 });
+
+  // Function to nudge the overlay by pixels
+  const nudgeOverlay = (dx, dy) => {
+    if (!map || !window.google) return;
+    const projection = map.getProjection();
+    if (!projection) return;
+
+    // Convert current lat/lng to world coordinates
+    const centerLatLng = new window.google.maps.LatLng(overlayPos.lat, overlayPos.lng);
+    const worldPoint = projection.fromLatLngToPoint(centerLatLng);
+    const zoom = map.getZoom();
+    const scale = Math.pow(2, zoom);
+
+    // Apply the pixel offset (dx/dy) back to world coordinates
+    const newWorldPoint = new window.google.maps.Point(
+      worldPoint.x + dx / scale,
+      worldPoint.y + dy / scale
+    );
+
+    // Convert back to LatLng
+    const newLatLng = projection.fromPointToLatLng(newWorldPoint);
+    setOverlayPos({ lat: newLatLng.lat(), lng: newLatLng.lng() });
+  };
 
   const handleMapClick = (e) => {
     if (!isCalibrating) return;
@@ -328,6 +352,42 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
                   onChange={(e) => setOverlayWidth(parseInt(e.target.value))}
                   className="w-full h-3 bg-slate-800 rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
+              </div>
+
+              {/* Position Nudge Controls */}
+              <div className="space-y-4">
+                <label className="text-slate-300 font-black text-xs uppercase tracking-widest px-1">Fine Position Nudge (Pixels)</label>
+                <div className="grid grid-cols-3 gap-2 w-48 mx-auto">
+                  <div />
+                  <button 
+                    onClick={() => nudgeOverlay(0, -1)}
+                    className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-white/10 text-white active:scale-90 transition-all flex justify-center"
+                  >
+                    <ChevronUp className="w-6 h-6" />
+                  </button>
+                  <div />
+                  <button 
+                    onClick={() => nudgeOverlay(-1, 0)}
+                    className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-white/10 text-white active:scale-90 transition-all flex justify-center"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <div className="flex items-center justify-center text-[10px] font-black text-slate-500 uppercase">MOVE</div>
+                  <button 
+                    onClick={() => nudgeOverlay(1, 0)}
+                    className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-white/10 text-white active:scale-90 transition-all flex justify-center"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                  <div />
+                  <button 
+                    onClick={() => nudgeOverlay(0, 1)}
+                    className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-white/10 text-white active:scale-90 transition-all flex justify-center"
+                  >
+                    <ChevronDown className="w-6 h-6" />
+                  </button>
+                  <div />
+                </div>
               </div>
             </div>
 
