@@ -166,12 +166,12 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
   const overlayUrl = import.meta.env.VITE_CAMPUS_OVERLAY_URL;
   
   // Define the geographic area where your custom map image will be "pinned"
-  // You can adjust these coordinates to align your image perfectly
+  // These coordinates cover the main U of Guelph campus area
   const CAMPUS_BOUNDS = {
-    north: 43.5350,
-    south: 43.5250,
-    east: -80.2200,
-    west: -80.2350,
+    north: 43.5385,
+    south: 43.5220,
+    east: -80.2150,
+    west: -80.2370,
   };
 
   const handleMapClick = (e) => {
