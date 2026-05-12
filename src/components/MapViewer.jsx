@@ -10,7 +10,7 @@ import {
 import { Navigation, MapPin, Sliders, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Custom OverlayView implementation for @vis.gl/react-google-maps
-const OverlayView = ({ position, children, pane = 'overlayMouseTarget' }) => {
+const OverlayView = ({ position, children, pane = 'overlayLayer' }) => {
   const map = useMap();
   const container = useMemo(() => document.createElement('div'), []);
 
