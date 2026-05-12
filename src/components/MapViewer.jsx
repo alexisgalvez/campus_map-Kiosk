@@ -9,7 +9,7 @@ import {
 import { Navigation, MapPin } from 'lucide-react';
 
 // Component to overlay a custom campus map image
-const CampusOverlay = ({ url, bounds }) => {
+const CampusOverlay = ({ url, bounds, opacity = 1.0 }) => {
   const map = useMap();
 
   useEffect(() => {
@@ -17,12 +17,12 @@ const CampusOverlay = ({ url, bounds }) => {
 
     const overlay = new window.google.maps.GroundOverlay(url, bounds, {
       clickable: false,
-      opacity: 1.0
+      opacity: opacity
     });
 
     overlay.setMap(map);
     return () => overlay.setMap(null);
-  }, [map, url, bounds]);
+  }, [map, url, bounds, opacity]);
 
   return null;
 };
@@ -213,8 +213,14 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           disableDefaultUI={true}
           gestureHandling={isCalibrating ? 'none' : 'greedy'}
         >
-          {/* Custom Campus Map Overlay */}
-          {overlayUrl && <CampusOverlay url={overlayUrl} bounds={CAMPUS_BOUNDS} />}
+          {/* Custom Campus Map Overlay - Becomes 50% transparent during calibration for alignment */}
+          {overlayUrl && (
+            <CampusOverlay 
+              url={overlayUrl} 
+              bounds={CAMPUS_BOUNDS} 
+              opacity={isCalibrating ? 0.5 : 1.0} 
+            />
+          )}
 
           {/* Real-time Directions with Marching Ants */}
           <Directions from={kioskLocation} to={destination} onRouteUpdate={onRouteUpdate} />
