@@ -126,22 +126,12 @@ const AutoZoom = ({ kioskLocation, destination }) => {
     bounds.extend({ lat: kioskLocation.lat, lng: kioskLocation.lng });
     bounds.extend({ lat: destination.lat, lng: destination.lng });
 
-    // Fit map to show both points with massive padding
+    // Fit map to show both points with massive padding for maximum campus context
     map.fitBounds(bounds, {
-      top: 600,
-      right: 600,
-      bottom: 600,
-      left: 600
-    });
-
-    // FORCE BIRD'S EYE VIEW: If the map zooms in too close (above 15.5), pull it back to 15.5
-    // This ensures you always see the surrounding buildings.
-    const listener = map.addListener('zoom_changed', () => {
-      if (map.getZoom() > 15.5) {
-        map.setZoom(15.5);
-      }
-      // Remove listener immediately so it doesn't interfere with user scrolling
-      window.google.maps.event.removeListener(listener);
+      top: 800,
+      right: 800,
+      bottom: 800,
+      left: 800
     });
   }, [map, kioskLocation, destination]);
 
@@ -152,6 +142,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
   const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY; 
   const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID; 
   const [mapTypeId, setMapTypeId] = useState('roadmap'); 
+  const [is3D, setIs3D] = useState(false);
 
   const handleMapClick = (e) => {
     if (!isCalibrating) return;
@@ -169,6 +160,10 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
     setMapTypeId(prev => prev === 'satellite' ? 'roadmap' : 'satellite');
   };
 
+  const toggle3D = () => {
+    setIs3D(!is3D);
+  };
+
   return (
     <div className="w-full h-full bg-slate-900 relative">
       <APIProvider apiKey={API_KEY}>
@@ -177,6 +172,8 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           defaultZoom={17}
           mapId={mapId}
           mapTypeId={mapTypeId}
+          tilt={is3D ? 45 : 0}
+          heading={0}
           onClick={handleMapClick}
           disableDefaultUI={true}
           gestureHandling={isCalibrating ? 'none' : 'greedy'}
@@ -216,6 +213,19 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
       </APIProvider>
 
       <div className="absolute bottom-12 right-12 z-50 flex flex-col gap-6">
+        {/* 3D Toggle Button */}
+        <button 
+          onClick={toggle3D}
+          className="bg-slate-900/90 backdrop-blur-xl p-4 rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col gap-2 hover:bg-slate-800 transition-all active:scale-95"
+        >
+          <p className="text-center text-xs font-black text-slate-500 uppercase tracking-widest mb-1">VIEW MODE</p>
+          <div className={`px-5 py-2 rounded-xl text-center font-black text-sm uppercase tracking-widest transition-all ${
+            is3D ? 'bg-primary text-white' : 'bg-slate-700 text-slate-300'
+          }`}>
+            {is3D ? '3D VIEW' : '2D VIEW'}
+          </div>
+        </button>
+
         <button 
           onClick={toggleMapType}
           className="bg-slate-900/90 backdrop-blur-xl p-4 rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col gap-2 hover:bg-slate-800 transition-all active:scale-95"
