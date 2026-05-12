@@ -48,7 +48,7 @@ const mockLocations = [
   { id: '47', name: 'Alumni House', category: 'admin', icon: Building, lat: 43.5350, lng: -80.2265 },
 ];
 
-const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, isCalibrating, setIsCalibrating, routeInfo, kioskLocation }) => {
+const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, routeInfo, kioskLocation }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearchChange = (e) => {
@@ -172,19 +172,6 @@ const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, isCalibrating
             )}
           </div>
           
-          <div className="mt-auto pt-6 border-t border-slate-800">
-            <button 
-              onClick={() => setIsCalibrating(!isCalibrating)}
-              className={`w-full py-5 px-6 rounded-3xl flex items-center justify-center gap-4 font-black text-xl transition-all ${
-                isCalibrating 
-                  ? 'bg-amber-500 text-black shadow-[0_0_40px_rgba(245,158,11,0.3)]' 
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700'
-              }`}
-            >
-              <Settings className={`w-7 h-7 ${isCalibrating ? 'animate-spin-slow' : ''}`} />
-              {isCalibrating ? 'EXIT CALIBRATION' : 'CALIBRATE KIOSK'}
-            </button>
-          </div>
         </div>
       )}
     </div>
