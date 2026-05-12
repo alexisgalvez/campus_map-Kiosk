@@ -161,7 +161,12 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
   };
 
   const toggle3D = () => {
-    setIs3D(!is3D);
+    const next3D = !is3D;
+    setIs3D(next3D);
+    // If turning on 3D, automatically switch to satellite for the "Google Earth" effect
+    if (next3D) {
+      setMapTypeId('satellite');
+    }
   };
 
   return (
@@ -172,8 +177,8 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           defaultZoom={17}
           mapId={mapId}
           mapTypeId={mapTypeId}
-          tilt={is3D ? 45 : 0}
-          heading={0}
+          tilt={is3D ? 67.5 : 0}
+          heading={is3D ? 45 : 0}
           onClick={handleMapClick}
           disableDefaultUI={true}
           gestureHandling={isCalibrating ? 'none' : 'greedy'}
