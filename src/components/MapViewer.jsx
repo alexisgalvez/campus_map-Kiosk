@@ -1,11 +1,11 @@
+import React, { useState, useEffect } from 'react';
 import { 
   APIProvider, 
   Map, 
   AdvancedMarker,
   useMapsLibrary,
   useMap,
-  OverlayView,
-  MapCanvasProjection
+  OverlayView
 } from '@vis.gl/react-google-maps';
 import { Navigation, MapPin, Sliders } from 'lucide-react';
 
