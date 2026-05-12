@@ -8,6 +8,25 @@ import {
 } from '@vis.gl/react-google-maps';
 import { Navigation, MapPin } from 'lucide-react';
 
+// Component to overlay a custom campus map image
+const CampusOverlay = ({ url, bounds }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !url || !bounds || !window.google) return;
+
+    const overlay = new window.google.maps.GroundOverlay(url, bounds, {
+      clickable: false,
+      opacity: 1.0
+    });
+
+    overlay.setMap(map);
+    return () => overlay.setMap(null);
+  }, [map, url, bounds]);
+
+  return null;
+};
+
 // Custom animated polyline for the "marching ants" effect
 const AnimatedPath = ({ path }) => {
   const map = useMap();
@@ -144,6 +163,17 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
   const [mapTypeId, setMapTypeId] = useState('roadmap'); 
   const [is3D, setIs3D] = useState(false);
 
+  const overlayUrl = import.meta.env.VITE_CAMPUS_OVERLAY_URL;
+  
+  // Define the geographic area where your custom map image will be "pinned"
+  // You can adjust these coordinates to align your image perfectly
+  const CAMPUS_BOUNDS = {
+    north: 43.5350,
+    south: 43.5250,
+    east: -80.2200,
+    west: -80.2350,
+  };
+
   const handleMapClick = (e) => {
     if (!isCalibrating) return;
     const lat = e.detail.latLng.lat;
@@ -183,6 +213,9 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           disableDefaultUI={true}
           gestureHandling={isCalibrating ? 'none' : 'greedy'}
         >
+          {/* Custom Campus Map Overlay */}
+          {overlayUrl && <CampusOverlay url={overlayUrl} bounds={CAMPUS_BOUNDS} />}
+
           {/* Real-time Directions with Marching Ants */}
           <Directions from={kioskLocation} to={destination} onRouteUpdate={onRouteUpdate} />
 
