@@ -52,9 +52,13 @@ const OverlayView = ({ position, children, pane = 'overlayLayer' }) => {
 };
 
 // Advanced Rotatable Overlay Component
-const CampusOverlay = ({ url, position, width, rotation, opacity = 1.0, isCalibrating, onNudge }) => {
+const CampusOverlay = ({ url, position, width, rotation, opacity = 1.0, isCalibrating, onNudge, currentZoom }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [lastMousePos, setLastMousePos] = useState(null);
+
+  // Scale width relative to zoom (Reference zoom is 17)
+  const referenceZoom = 17;
+  const scaledWidth = width * Math.pow(2, currentZoom - referenceZoom);
 
   const handleMouseDown = (e) => {
     if (!isCalibrating) return;
@@ -93,7 +97,7 @@ const CampusOverlay = ({ url, position, width, rotation, opacity = 1.0, isCalibr
         style={{
           transformOrigin: 'center center',
           transform: `rotate(${rotation}deg)`,
-          width: `${width}px`,
+          width: `${scaledWidth}px`,
           opacity: opacity,
           pointerEvents: isCalibrating ? 'auto' : 'none',
           cursor: isCalibrating ? (isDragging ? 'grabbing' : 'grab') : 'default',
@@ -249,6 +253,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
   const [mapTypeId, setMapTypeId] = useState('roadmap'); 
   const [is3D, setIs3D] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
+  const [currentZoom, setCurrentZoom] = useState(17);
 
   // Custom Overlay State
   const overlayUrl = import.meta.env.VITE_CAMPUS_OVERLAY_URL;
@@ -314,7 +319,10 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           tilt={is3D ? 67.5 : 0}
           heading={is3D ? 45 : 0}
           onClick={handleMapClick}
-          onCameraChanged={(ev) => setMapInstance(ev.map)}
+          onCameraChanged={(ev) => {
+            setMapInstance(ev.map);
+            setCurrentZoom(ev.map.getZoom());
+          }}
           disableDefaultUI={true}
           gestureHandling="greedy"
         >
@@ -328,6 +336,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
               opacity={isCalibrating ? 0.5 : 1.0} 
               isCalibrating={isCalibrating}
               onNudge={nudgeOverlay}
+              currentZoom={currentZoom}
             />
           )}
 
