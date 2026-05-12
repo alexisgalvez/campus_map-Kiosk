@@ -7,7 +7,7 @@ import {
   useMapsLibrary,
   useMap
 } from '@vis.gl/react-google-maps';
-import { Navigation, MapPin, Sliders, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, LocateFixed, Move, Save, CheckCircle2, AlertCircle, ShieldCheck, X, Delete } from 'lucide-react';
+import { Navigation, MapPin, Sliders, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, LocateFixed, Move, Save, CheckCircle2, AlertCircle, ShieldCheck, X, Delete, Building, BookOpen, Search } from 'lucide-react';
 
 // Import the permanent configuration
 import initialConfig from '../config/kiosk-config.json';
@@ -178,7 +178,7 @@ const CampusOverlay = ({ url, position, width, rotation, opacity = 1.0, isIntera
           height: 'auto',
           opacity: opacity,
           pointerEvents: isInteractive ? 'auto' : 'none',
-          cursor: isInteractive ? (isDragging ? 'grabbing' : 'grab') : 'default',
+          cursor: isInteractive ? (isDragging ? 'grabbing' : 'grab') : (pane === 'overlayMouseTarget' ? 'crosshair' : 'default'),
           userSelect: 'none',
           outline: isInteractive ? '3px dashed rgba(255, 165, 0, 0.8)' : 'none',
           backgroundColor: isInteractive ? 'rgba(255,255,255,0.05)' : 'transparent',
@@ -285,19 +285,79 @@ const AutoZoom = ({ kioskLocation, destination }) => {
   return null;
 };
 
-const MapViewer = ({ destination, kioskLocation, setKioskLocation, onRouteUpdate }) => {
+// Master list of buildings for the entire application
+const buildings = [
+  // ACADEMIC & RESEARCH (Yellow)
+  { id: '101', name: 'Animal Science & Nutrition', category: 'academic', lat: 43.5305, lng: -80.2290 },
+  { id: '102', name: 'J.D. MacLachlan Building', category: 'academic', lat: 43.5312, lng: -80.2285 },
+  { id: '103', name: 'Crop Science Building', category: 'academic', lat: 43.5320, lng: -80.2290 },
+  { id: '104', name: 'Richards Building (SOES)', category: 'academic', lat: 43.5315, lng: -80.2295 },
+  { id: '105', name: 'Zavitz Hall', category: 'academic', lat: 43.5322, lng: -80.2275 },
+  { id: '106', name: 'Landscape Architecture', category: 'academic', lat: 43.5318, lng: -80.2265 },
+  { id: '108', name: 'Johnston Hall', category: 'academic', lat: 43.5325, lng: -80.2268 },
+  { id: '111', name: 'MacKinnon Building', category: 'academic', lat: 43.5315, lng: -80.2280 },
+  { id: '112', name: 'Rozanski Hall', category: 'academic', lat: 43.5305, lng: -80.2235 },
+  { id: '113', name: 'Massey Hall', category: 'academic', lat: 43.5315, lng: -80.2268 },
+  { id: '114', name: 'Raithby House', category: 'academic', lat: 43.5318, lng: -80.2272 },
+  { id: '115', name: 'Blackwood Hall', category: 'academic', lat: 43.5308, lng: -80.2245 },
+  { id: '118', name: 'Macdonald Institute', category: 'academic', lat: 43.5305, lng: -80.2305 },
+  { id: '121', name: 'Alexander Hall', category: 'academic', lat: 43.5310, lng: -80.2300 },
+  { id: '122', name: 'Axelrod Building', category: 'academic', lat: 43.5302, lng: -80.2298 },
+  { id: '124', name: 'Reynolds Building', category: 'academic', lat: 43.5310, lng: -80.2258 },
+  { id: '125', name: 'Macleod Institute', category: 'academic', lat: 43.5312, lng: -80.2255 },
+  { id: '141', name: 'Science Complex', category: 'academic', lat: 43.5302, lng: -80.2284 },
+  { id: '142', name: 'Summerlee Science Complex', category: 'academic', lat: 43.5300, lng: -80.2280 },
+  { id: '151', name: 'War Memorial Hall', category: 'academic', lat: 43.5315, lng: -80.2292 },
+  { id: '158', name: 'Thornbrough Building', category: 'academic', lat: 43.5306, lng: -80.2250 },
+  { id: '159', name: 'Bovey Building', category: 'academic', lat: 43.5285, lng: -80.2260 },
+  { id: '160', name: 'Graham Hall', category: 'academic', lat: 43.5305, lng: -80.2255 },
+  { id: '161', name: 'Day Hall', category: 'academic', lat: 43.5310, lng: -80.2248 },
+  { id: '165', name: 'MacNaughton Building', category: 'academic', lat: 43.5305, lng: -80.2290 },
+
+  // ATHLETICS (Red)
+  { id: '201', name: 'Athletic Centre (Gryphon Centre)', category: 'athletics', lat: 43.5335, lng: -80.2225 },
+  { id: '202', name: 'W.F. Mitchell Athletics Centre', category: 'athletics', lat: 43.5330, lng: -80.2230 },
+  { id: '203', name: 'Alumni Stadium', category: 'athletics', lat: 43.5325, lng: -80.2210 },
+  { id: '204', name: 'Field House', category: 'athletics', lat: 43.5332, lng: -80.2220 },
+
+  // RESIDENCES & FOOD (Blue)
+  { id: '301', name: 'University Centre (UC)', category: 'services', lat: 43.5309, lng: -80.2285 },
+  { id: '302', name: 'Creelman Hall', category: 'services', lat: 43.5328, lng: -80.2255 },
+  { id: '303', name: 'Lennox & Addington Hall', category: 'residence', lat: 43.5360, lng: -80.2245 },
+  { id: '304', name: 'Lambton Hall', category: 'residence', lat: 43.5322, lng: -80.2238 },
+  { id: '305', name: 'Watson Hall', category: 'residence', lat: 43.5300, lng: -80.2315 },
+  { id: '306', name: 'Mills Hall', category: 'residence', icon: Building, lat: 43.5318, lng: -80.2295 },
+  { id: '307', name: 'Johnston Hall (Res)', category: 'residence', lat: 43.5325, lng: -80.2268 },
+  { id: '308', name: 'Maids Hall', category: 'residence', lat: 43.5320, lng: -80.2260 },
+  { id: '309', name: 'Macdonald Hall', category: 'residence', lat: 43.5302, lng: -80.2308 },
+  { id: '310', name: 'East Residence', category: 'residence', lat: 43.5330, lng: -80.2180 },
+  { id: '311', name: 'East Village', category: 'residence', lat: 43.5340, lng: -80.2160 },
+  { id: '312', name: 'Mountain Hall', category: 'residence', lat: 43.5335, lng: -80.2290 },
+  { id: '313', name: 'Prairie Hall', category: 'residence', lat: 43.5340, lng: -80.2280 },
+  { id: '314', name: 'Maritime Hall', category: 'residence', lat: 43.5345, lng: -80.2270 },
+
+  // SUPPORT (Grey)
+  { id: '401', name: 'Campus Police / Fire', category: 'admin', lat: 43.5300, lng: -80.2200 },
+  { id: '402', name: 'Student Wellness Centre', category: 'services', lat: 43.5308, lng: -80.2310 },
+  { id: '403', name: 'McLaughlin Library', category: 'academic', lat: 43.5312, lng: -80.2275 },
+];
+
+const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverrides, setLocationOverrides, onRouteUpdate }) => {
   const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY; 
   const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID; 
   const [is3D, setIs3D] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
   const [calibrationSubMode, setCalibrationSubMode] = useState('map');
   const [saveStatus, setSaveStatus] = useState('idle');
+  const [adminSearchTerm, setAdminSearchTerm] = useState('');
+  const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
 
   // Admin Security State
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
+  const [editingLocationId, setEditingLocationId] = useState(null);
   const tripleTapTimer = useRef(null);
   const tapCount = useRef(0);
 
@@ -350,14 +410,23 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, onRouteUpdate
   };
 
   const handleMapClick = (e) => {
-    if (!isCalibrating || calibrationSubMode !== 'kiosk') return;
-    setKioskLocation({ ...kioskLocation, lat: e.detail.latLng.lat, lng: e.detail.latLng.lng });
+    if (!isCalibrating) return;
+    
+    if (calibrationSubMode === 'kiosk') {
+      setKioskLocation({ ...kioskLocation, lat: e.detail.latLng.lat, lng: e.detail.latLng.lng });
+    } else if (calibrationSubMode === 'locations' && editingLocationId) {
+      setLocationOverrides(prev => ({
+        ...prev,
+        [editingLocationId]: { lat: e.detail.latLng.lat, lng: e.detail.latLng.lng }
+      }));
+    }
   };
 
   const saveConfiguration = async () => {
     const configData = {
       overlay: { position: overlayPos, width: overlayWidth, rotation: overlayRotation },
-      kiosk: kioskLocation
+      kiosk: kioskLocation,
+      locations: locationOverrides
     };
     setSaveStatus('saving');
     localStorage.setItem('kiosk_calibration', JSON.stringify(configData));
@@ -392,7 +461,10 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, onRouteUpdate
   }, [isCalibrating, calibrationSubMode]);
 
   return (
-    <div className="w-full h-full bg-slate-900 relative text-slate-100 font-sans overflow-hidden">
+    <div 
+      className="w-full h-full bg-slate-900 relative text-slate-100 font-sans overflow-hidden"
+      style={{ cursor: isCalibrating && (calibrationSubMode === 'kiosk' || calibrationSubMode === 'locations') ? 'crosshair' : 'default' }}
+    >
       {/* Secret Ghost Trigger Area */}
       <div 
         onClick={handleTripleTap}
@@ -422,6 +494,8 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, onRouteUpdate
           onCameraChanged={(ev) => setMapInstance(ev.map)}
           disableDefaultUI={true}
           gestureHandling="greedy"
+          draggableCursor={isCalibrating && (calibrationSubMode === 'kiosk' || calibrationSubMode === 'locations') ? 'crosshair' : 'grab'}
+          draggingCursor={isCalibrating && (calibrationSubMode === 'kiosk' || calibrationSubMode === 'locations') ? 'crosshair' : 'grabbing'}
         >
           {overlayUrl && showOverlay && (
             <CampusOverlay 
@@ -502,7 +576,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, onRouteUpdate
 
       <div className="absolute bottom-12 right-12 z-50 flex flex-col gap-6">
         {isCalibrating && (
-          <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-[40px] shadow-3xl border border-white/10 w-[480px] mb-6 animate-in slide-in-from-bottom-10 fade-in duration-500 overflow-hidden">
+          <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-[40px] shadow-3xl border border-white/10 w-[480px] mb-6 animate-in slide-in-from-bottom-10 fade-in duration-500 overflow-visible z-[1000]">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
                 <div className="bg-amber-500/20 p-3 rounded-2xl"><Sliders className="w-6 h-6 text-amber-500" /></div>
@@ -538,8 +612,9 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, onRouteUpdate
             </div>
 
             <div className="flex gap-2 p-2 bg-slate-800/50 rounded-2xl mb-8">
-              <button onClick={() => setCalibrationSubMode('map')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${calibrationSubMode === 'map' ? 'bg-amber-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}><Move className="w-4 h-4" />Align Map</button>
-              <button onClick={() => setCalibrationSubMode('kiosk')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${calibrationSubMode === 'kiosk' ? 'bg-blue-500 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}><LocateFixed className="w-4 h-4" />Set Kiosk</button>
+              <button onClick={() => setCalibrationSubMode('map')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${calibrationSubMode === 'map' ? 'bg-amber-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}><Move className="w-3 h-3" />Align Map</button>
+              <button onClick={() => setCalibrationSubMode('kiosk')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${calibrationSubMode === 'kiosk' ? 'bg-blue-500 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}><LocateFixed className="w-3 h-3" />Set Kiosk</button>
+              <button onClick={() => setCalibrationSubMode('locations')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${calibrationSubMode === 'locations' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}><MapPin className="w-3 h-3" />Locations</button>
             </div>
 
             <div className="space-y-8">
@@ -563,11 +638,155 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, onRouteUpdate
                     </div>
                   </div>
                 </>
+              ) : calibrationSubMode === 'kiosk' ? (
+                <div className="space-y-6 animate-in zoom-in-95 duration-300">
+                  <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-[32px] text-center space-y-4">
+                    <div className="bg-blue-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-blue-500/20">
+                      <LocateFixed className="w-8 h-8 text-white" />
+                    </div>
+                    <h4 className="text-white font-black text-lg uppercase tracking-wider">Kiosk Position</h4>
+                    
+                    <div className="grid grid-cols-2 gap-3 mt-4">
+                      <div className="bg-slate-900/80 p-3 rounded-2xl border border-white/5">
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">LAT (X)</p>
+                        <p className="text-sm font-mono font-bold text-blue-400">
+                          {kioskLocation.lat.toFixed(6)}
+                        </p>
+                      </div>
+                      <div className="bg-slate-900/80 p-3 rounded-2xl border border-white/5">
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">LNG (Y)</p>
+                        <p className="text-sm font-mono font-bold text-blue-400">
+                          {kioskLocation.lng.toFixed(6)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-full text-[9px] font-black uppercase tracking-tighter animate-pulse">
+                      <CheckCircle2 className="w-3 h-3" /> Position Set
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-800/30 p-4 rounded-2xl text-center border border-white/5">
+                    <p className="text-slate-400 text-[10px] font-bold leading-relaxed text-center">
+                      Tap the map to place the Kiosk icon. <br /> Click <span className="text-white">SAVE DATA</span> to finalize.
+                    </p>
+                  </div>
+                </div>
               ) : (
-                <div className="bg-blue-600/10 border border-blue-500/20 p-6 rounded-3xl text-center space-y-4 animate-in zoom-in-95 duration-300">
-                  <div className="bg-blue-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-blue-500/20"><LocateFixed className="w-8 h-8 text-white" /></div>
-                  <h4 className="text-white font-black text-lg">Positioning Kiosk</h4>
-                  <p className="text-slate-400 text-sm font-bold leading-relaxed">Click anywhere on the map to place the marker. <br /> Then click <span className="text-white">SAVE DATA</span> to update the local file.</p>
+                <div className="space-y-6 animate-in zoom-in-95 duration-300">
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex items-center gap-3">
+                    <MapPin className="w-5 h-5 text-emerald-500" />
+                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Tune Destination Entrance</p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Select a point to calibrate</p>
+                    
+                    <div className="relative">
+                      {/* Search & Selector Integrated */}
+                      <div className="relative group">
+                        <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isAdminDropdownOpen ? 'text-emerald-500' : 'text-slate-500'}`} />
+                        <input 
+                          type="text"
+                          placeholder={editingLocationId ? buildings.find(b => b.id === editingLocationId)?.name : "Search & Select Building..."}
+                          className="w-full bg-slate-800 border-2 border-slate-700 p-4 pl-12 rounded-2xl text-white font-bold outline-none focus:border-emerald-500 transition-all text-sm placeholder:text-slate-400"
+                          value={adminSearchTerm}
+                          onFocus={() => setIsAdminDropdownOpen(true)}
+                          onChange={(e) => {
+                            setAdminSearchTerm(e.target.value);
+                            setIsAdminDropdownOpen(true);
+                          }}
+                        />
+                        {editingLocationId && !adminSearchTerm && (
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                            <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-black border border-emerald-500/30">SELECTED</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Dropdown Results */}
+                      {isAdminDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border-2 border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-[1100] max-h-[300px] overflow-y-auto overflow-x-hidden custom-scrollbar ring-8 ring-slate-950/50">
+                          {buildings
+                            .filter(b => 
+                              b.name.toLowerCase().includes(adminSearchTerm.toLowerCase()) || 
+                              b.id.includes(adminSearchTerm)
+                            )
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map((b, idx) => (
+                              <button
+                                key={b.id}
+                                onClick={() => {
+                                  setEditingLocationId(b.id);
+                                  setAdminSearchTerm('');
+                                  setIsAdminDropdownOpen(false);
+                                }}
+                                className={`w-full text-left p-4 hover:bg-slate-700/50 flex items-center gap-4 transition-colors group/item border-b border-slate-700/50 last:border-0 ${editingLocationId === b.id ? 'bg-emerald-500/10' : ''}`}
+                              >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${editingLocationId === b.id ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400 group-hover/item:bg-slate-600'}`}>
+                                  {b.id}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className={`font-bold text-sm ${editingLocationId === b.id ? 'text-emerald-400' : 'text-slate-200'}`}>
+                                    {b.name}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 uppercase tracking-tighter">{b.category}</span>
+                                </div>
+                                {editingLocationId === b.id && (
+                                  <CheckCircle2 className="ml-auto w-4 h-4 text-emerald-500" />
+                                )}
+                              </button>
+                            ))}
+                          
+                          {buildings.filter(b => b.name.toLowerCase().includes(adminSearchTerm.toLowerCase()) || b.id.includes(adminSearchTerm)).length === 0 && (
+                            <div className="p-8 text-center">
+                              <AlertCircle className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                              <p className="text-slate-500 text-sm font-bold">No buildings match your search</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Click overlay to close dropdown */}
+                      {isAdminDropdownOpen && (
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setIsAdminDropdownOpen(false)}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {editingLocationId && (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-3xl text-center animate-in zoom-in-95">
+                        <p className="text-white font-black text-sm uppercase mb-3">Target Coordinate</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-slate-900/50 p-3 rounded-2xl border border-white/5">
+                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">LAT (X)</p>
+                            <p className="text-sm font-mono font-bold text-emerald-400">
+                              {locationOverrides[editingLocationId]?.lat?.toFixed(6) || '---'}
+                            </p>
+                          </div>
+                          <div className="bg-slate-900/50 p-3 rounded-2xl border border-white/5">
+                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">LNG (Y)</p>
+                            <p className="text-sm font-mono font-bold text-emerald-400">
+                              {locationOverrides[editingLocationId]?.lng?.toFixed(6) || '---'}
+                            </p>
+                          </div>
+                        </div>
+                        {locationOverrides[editingLocationId] && (
+                          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-emerald-500 text-slate-950 rounded-full text-[9px] font-black uppercase tracking-tighter animate-pulse">
+                            <CheckCircle2 className="w-3 h-3" /> Staged for Sync
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="bg-slate-800/30 p-4 rounded-2xl text-center border border-white/5">
+                        <p className="text-slate-400 text-[10px] font-bold">Tap anywhere on the map to <br/> update this entrance location.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

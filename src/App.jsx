@@ -9,16 +9,17 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [routeInfo, setRouteInfo] = useState(null);
 
-  // Kiosk Location (persisted in localStorage)
-  const [kioskLocation, setKioskLocation] = useState(() => {
-    const saved = localStorage.getItem('kiosk_location');
-    return saved ? JSON.parse(saved) : { lat: 43.5309, lng: -80.2285, name: 'Kiosk Station 1' };
-  });
+  const [kioskLocation, setKioskLocation] = useState({ lat: 43.5309, lng: -80.2285, name: 'Kiosk Station 1' });
+  const [locationOverrides, setLocationOverrides] = useState({});
 
-  // Persist kiosk location when it changes
   useEffect(() => {
-    localStorage.setItem('kiosk_location', JSON.stringify(kioskLocation));
-  }, [kioskLocation]);
+    const saved = localStorage.getItem('kiosk_calibration');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.kiosk) setKioskLocation(data.kiosk);
+      if (data.locations) setLocationOverrides(data.locations);
+    }
+  }, []);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-900 text-slate-100 font-sans">
@@ -30,6 +31,7 @@ function App() {
         setDestination={setDestination}
         routeInfo={routeInfo}
         kioskLocation={kioskLocation}
+        locationOverrides={locationOverrides}
       />
 
       {/* Main Map Area */}
@@ -38,6 +40,8 @@ function App() {
           destination={destination} 
           kioskLocation={kioskLocation} 
           setKioskLocation={setKioskLocation}
+          locationOverrides={locationOverrides}
+          setLocationOverrides={setLocationOverrides}
           onRouteUpdate={setRouteInfo}
         />
         

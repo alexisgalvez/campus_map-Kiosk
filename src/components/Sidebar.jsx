@@ -3,52 +3,62 @@ import { Search, Navigation, MapPin, Building, Utensils, BookOpen, X, ChevronLef
 import { QRCodeSVG } from 'qrcode.react';
 
 const mockLocations = [
-  // Academic Buildings
-  { id: '1', name: 'Engineering Complex (Thornbrough)', category: 'academic', icon: Building, lat: 43.5306, lng: -80.2250 },
-  { id: '3', name: 'Library (McLaughlin)', category: 'academic', icon: BookOpen, lat: 43.5312, lng: -80.2275 },
-  { id: '6', name: 'Johnston Hall', category: 'academic', icon: Building, lat: 43.5325, lng: -80.2268 },
-  { id: '7', name: 'Rozanski Hall', category: 'academic', icon: Building, lat: 43.5305, lng: -80.2235 },
-  { id: '8', name: 'Science Complex', category: 'academic', icon: Building, lat: 43.5302, lng: -80.2284 },
-  { id: '9', name: 'MacKinnon Building', category: 'academic', icon: Building, lat: 43.5315, lng: -80.2280 },
-  { id: '10', name: 'MacNaughton Building', category: 'academic', icon: Building, lat: 43.5305, lng: -80.2290 },
-  { id: '11', name: 'Alexander Hall', category: 'academic', icon: Building, lat: 43.5310, lng: -80.2300 },
-  { id: '12', name: 'Bovey Building', category: 'academic', icon: Building, lat: 43.5285, lng: -80.2260 },
-  { id: '13', name: 'Reynolds Building', category: 'academic', icon: Building, lat: 43.5310, lng: -80.2258 },
-  { id: '14', name: 'Landscape Architecture', category: 'academic', icon: Building, lat: 43.5318, lng: -80.2265 },
-  { id: '15', name: 'OVC Pathobiology', category: 'academic', icon: Building, lat: 43.5304, lng: -80.2325 },
-  { id: '16', name: 'Clinical Studies (OVC)', category: 'academic', icon: Building, lat: 43.5300, lng: -80.2335 },
-  { id: '17', name: 'Zavitz Hall', category: 'academic', icon: Building, lat: 43.5322, lng: -80.2275 },
-  { id: '27', name: 'Macdonald Institute', category: 'academic', icon: Building, lat: 43.5305, lng: -80.2305 },
-  { id: '28', name: 'Massey Hall', category: 'academic', icon: Building, lat: 43.5315, lng: -80.2268 },
+  // ACADEMIC & RESEARCH (Yellow)
+  { id: '101', name: 'Animal Science & Nutrition', category: 'academic', icon: Building, lat: 43.5305, lng: -80.2290 },
+  { id: '102', name: 'J.D. MacLachlan Building', category: 'academic', icon: Building, lat: 43.5312, lng: -80.2285 },
+  { id: '103', name: 'Crop Science Building', category: 'academic', icon: Building, lat: 43.5320, lng: -80.2290 },
+  { id: '104', name: 'Richards Building (SOES)', category: 'academic', icon: Building, lat: 43.5315, lng: -80.2295 },
+  { id: '105', name: 'Zavitz Hall', category: 'academic', icon: Building, lat: 43.5322, lng: -80.2275 },
+  { id: '106', name: 'Landscape Architecture', category: 'academic', icon: Building, lat: 43.5318, lng: -80.2265 },
+  { id: '108', name: 'Johnston Hall', category: 'academic', icon: Building, lat: 43.5325, lng: -80.2268 },
+  { id: '111', name: 'MacKinnon Building', category: 'academic', icon: Building, lat: 43.5315, lng: -80.2280 },
+  { id: '112', name: 'Rozanski Hall', category: 'academic', icon: Building, lat: 43.5305, lng: -80.2235 },
+  { id: '113', name: 'Massey Hall', category: 'academic', icon: Building, lat: 43.5315, lng: -80.2268 },
+  { id: '114', name: 'Raithby House', category: 'academic', icon: Building, lat: 43.5318, lng: -80.2272 },
+  { id: '115', name: 'Blackwood Hall', category: 'academic', icon: Building, lat: 43.5308, lng: -80.2245 },
+  { id: '118', name: 'Macdonald Institute', category: 'academic', icon: Building, lat: 43.5305, lng: -80.2305 },
+  { id: '121', name: 'Alexander Hall', category: 'academic', icon: Building, lat: 43.5310, lng: -80.2300 },
+  { id: '122', name: 'Axelrod Building', category: 'academic', icon: Building, lat: 43.5302, lng: -80.2298 },
+  { id: '124', name: 'Reynolds Building', category: 'academic', icon: Building, lat: 43.5310, lng: -80.2258 },
+  { id: '125', name: 'Macleod Institute', category: 'academic', icon: Building, lat: 43.5312, lng: -80.2255 },
+  { id: '141', name: 'Science Complex', category: 'academic', icon: Building, lat: 43.5302, lng: -80.2284 },
+  { id: '142', name: 'Summerlee Science Complex', category: 'academic', icon: Building, lat: 43.5300, lng: -80.2280 },
+  { id: '151', name: 'War Memorial Hall', category: 'academic', icon: Building, lat: 43.5315, lng: -80.2292 },
+  { id: '158', name: 'Thornbrough Building', category: 'academic', icon: Building, lat: 43.5306, lng: -80.2250 },
+  { id: '159', name: 'Bovey Building', category: 'academic', icon: Building, lat: 43.5285, lng: -80.2260 },
+  { id: '160', name: 'Graham Hall', category: 'academic', icon: Building, lat: 43.5305, lng: -80.2255 },
+  { id: '161', name: 'Day Hall', category: 'academic', icon: Building, lat: 43.5310, lng: -80.2248 },
+  { id: '165', name: 'MacNaughton Building', category: 'academic', icon: Building, lat: 43.5305, lng: -80.2290 },
 
-  // Service Hubs
-  { id: '2', name: 'University Centre (UC)', category: 'services', icon: Utensils, lat: 43.5309, lng: -80.2285 },
-  { id: '4', name: 'Athletic Centre', category: 'services', icon: Navigation, lat: 43.5335, lng: -80.2225 },
-  { id: '5', name: 'Student Wellness Centre', category: 'services', icon: Navigation, lat: 43.5308, lng: -80.2310 },
-  { id: '18', name: 'Bullring', category: 'services', icon: Utensils, lat: 43.5318, lng: -80.2278 },
-  { id: '19', name: 'Brass Taps', category: 'services', icon: Utensils, lat: 43.5309, lng: -80.2285 },
-  { id: '29', name: 'Creelman Hall', category: 'services', icon: Utensils, lat: 43.5328, lng: -80.2255 },
-  { id: '30', name: 'Gryphon Centre Arena', category: 'services', icon: Navigation, lat: 43.5340, lng: -80.2215 },
+  // ATHLETICS (Red)
+  { id: '201', name: 'Athletic Centre (Gryphon Centre)', category: 'athletics', icon: Navigation, lat: 43.5335, lng: -80.2225 },
+  { id: '202', name: 'W.F. Mitchell Athletics Centre', category: 'athletics', icon: Navigation, lat: 43.5330, lng: -80.2230 },
+  { id: '203', name: 'Alumni Stadium', category: 'athletics', icon: Navigation, lat: 43.5325, lng: -80.2210 },
+  { id: '204', name: 'Field House', category: 'athletics', icon: Navigation, lat: 43.5332, lng: -80.2220 },
 
-  // Residences
-  { id: '20', name: 'Lambton Hall', category: 'residence', icon: Building, lat: 43.5322, lng: -80.2238 },
-  { id: '21', name: 'Lennox & Addington', category: 'residence', icon: Building, lat: 43.5360, lng: -80.2245 },
-  { id: '22', name: 'East Residence', category: 'residence', icon: Building, lat: 43.5330, lng: -80.2180 },
-  { id: '23', name: 'West Residence', category: 'residence', icon: Building, lat: 43.5270, lng: -80.2350 },
-  { id: '24', name: 'Maritime Hall', category: 'residence', icon: Building, lat: 43.5345, lng: -80.2270 },
-  { id: '25', name: 'Prairie Hall', category: 'residence', icon: Building, lat: 43.5340, lng: -80.2280 },
-  { id: '26', name: 'Mountain Hall', category: 'residence', icon: Building, lat: 43.5335, lng: -80.2290 },
-  { id: '31', name: 'Mills Hall', category: 'residence', icon: Building, lat: 43.5318, lng: -80.2295 },
-  { id: '32', name: 'Watson Hall', category: 'residence', icon: Building, lat: 43.5300, lng: -80.2315 },
+  // RESIDENCES & FOOD (Blue)
+  { id: '301', name: 'University Centre (UC)', category: 'services', icon: Utensils, lat: 43.5309, lng: -80.2285 },
+  { id: '302', name: 'Creelman Hall', category: 'services', icon: Utensils, lat: 43.5328, lng: -80.2255 },
+  { id: '303', name: 'Lennox & Addington Hall', category: 'residence', icon: Building, lat: 43.5360, lng: -80.2245 },
+  { id: '304', name: 'Lambton Hall', category: 'residence', icon: Building, lat: 43.5322, lng: -80.2238 },
+  { id: '305', name: 'Watson Hall', category: 'residence', icon: Building, lat: 43.5300, lng: -80.2315 },
+  { id: '306', name: 'Mills Hall', category: 'residence', icon: Building, lat: 43.5318, lng: -80.2295 },
+  { id: '307', name: 'Johnston Hall (Res)', category: 'residence', icon: Building, lat: 43.5325, lng: -80.2268 },
+  { id: '308', name: 'Maids Hall', category: 'residence', icon: Building, lat: 43.5320, lng: -80.2260 },
+  { id: '309', name: 'Macdonald Hall', category: 'residence', icon: Building, lat: 43.5302, lng: -80.2308 },
+  { id: '310', name: 'East Residence', category: 'residence', icon: Building, lat: 43.5330, lng: -80.2180 },
+  { id: '311', name: 'East Village', category: 'residence', icon: Building, lat: 43.5340, lng: -80.2160 },
+  { id: '312', name: 'Mountain Hall', category: 'residence', icon: Building, lat: 43.5335, lng: -80.2290 },
+  { id: '313', name: 'Prairie Hall', category: 'residence', icon: Building, lat: 43.5340, lng: -80.2280 },
+  { id: '314', name: 'Maritime Hall', category: 'residence', icon: Building, lat: 43.5345, lng: -80.2270 },
 
-  // Admin & Landmarks
-  { id: '44', name: 'Campus Police / Security', category: 'admin', icon: MapPin, lat: 43.5300, lng: -80.2200 },
-  { id: '45', name: 'Visitor Centre', category: 'admin', icon: MapPin, lat: 43.5320, lng: -80.2255 },
-  { id: '46', name: 'War Memorial Hall', category: 'admin', icon: Building, lat: 43.5315, lng: -80.2292 },
-  { id: '47', name: 'Alumni House', category: 'admin', icon: Building, lat: 43.5350, lng: -80.2265 },
+  // SUPPORT (Grey)
+  { id: '401', name: 'Campus Police / Fire', category: 'admin', icon: MapPin, lat: 43.5300, lng: -80.2200 },
+  { id: '402', name: 'Student Wellness Centre', category: 'services', icon: Navigation, lat: 43.5308, lng: -80.2310 },
+  { id: '403', name: 'McLaughlin Library', category: 'academic', icon: BookOpen, lat: 43.5312, lng: -80.2275 },
 ];
 
-const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, routeInfo, kioskLocation }) => {
+const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, routeInfo, kioskLocation, locationOverrides = {} }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearchChange = (e) => {
@@ -59,8 +69,15 @@ const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, routeInfo, ki
     }
   };
 
-  const filteredLocations = mockLocations.filter(loc => 
-    loc.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLocations = mockLocations.map(loc => {
+    const override = locationOverrides[loc.id];
+    if (override) {
+      return { ...loc, lat: override.lat, lng: override.lng };
+    }
+    return loc;
+  }).filter(loc => 
+    loc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    loc.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Generate Google Maps URL for Mobile Handoff
