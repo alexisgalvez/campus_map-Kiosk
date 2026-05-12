@@ -207,7 +207,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
   const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID; 
   const [mapTypeId, setMapTypeId] = useState('roadmap'); 
   const [is3D, setIs3D] = useState(false);
-  const map = useMap();
+  const [mapInstance, setMapInstance] = useState(null);
 
   // Custom Overlay State
   const overlayUrl = import.meta.env.VITE_CAMPUS_OVERLAY_URL;
@@ -217,14 +217,14 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
 
   // Function to nudge the overlay by pixels
   const nudgeOverlay = (dx, dy) => {
-    if (!map || !window.google) return;
-    const projection = map.getProjection();
+    if (!mapInstance || !window.google) return;
+    const projection = mapInstance.getProjection();
     if (!projection) return;
 
     // Convert current lat/lng to world coordinates
     const centerLatLng = new window.google.maps.LatLng(overlayPos.lat, overlayPos.lng);
     const worldPoint = projection.fromLatLngToPoint(centerLatLng);
-    const zoom = map.getZoom();
+    const zoom = mapInstance.getZoom();
     const scale = Math.pow(2, zoom);
 
     // Apply the pixel offset (dx/dy) back to world coordinates
@@ -273,6 +273,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           tilt={is3D ? 67.5 : 0}
           heading={is3D ? 45 : 0}
           onClick={handleMapClick}
+          onCameraChanged={(ev) => setMapInstance(ev.map)}
           disableDefaultUI={true}
           gestureHandling={isCalibrating ? 'none' : 'greedy'}
         >
