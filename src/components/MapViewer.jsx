@@ -52,22 +52,63 @@ const OverlayView = ({ position, children, pane = 'overlayLayer' }) => {
 };
 
 // Advanced Rotatable Overlay Component
-const CampusOverlay = ({ url, position, width, rotation, opacity = 1.0 }) => {
+const CampusOverlay = ({ url, position, width, rotation, opacity = 1.0, isCalibrating, onNudge }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [lastMousePos, setLastMousePos] = useState(null);
+
+  const handleMouseDown = (e) => {
+    if (!isCalibrating) return;
+    setIsDragging(true);
+    setLastMousePos({ x: e.clientX, y: e.clientY });
+    e.stopPropagation();
+  };
+
+  useEffect(() => {
+    if (!isDragging || !lastMousePos) return;
+
+    const handleMouseMove = (e) => {
+      const dx = e.clientX - lastMousePos.x;
+      const dy = e.clientY - lastMousePos.y;
+      onNudge(dx, dy);
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setLastMousePos(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, lastMousePos, onNudge]);
+
   return (
     <OverlayView position={position}>
       <div 
+        onMouseDown={handleMouseDown}
         style={{
           transformOrigin: 'center center',
           transform: `rotate(${rotation}deg)`,
           width: `${width}px`,
           opacity: opacity,
-          pointerEvents: 'none',
+          pointerEvents: isCalibrating ? 'auto' : 'none',
+          cursor: isCalibrating ? (isDragging ? 'grabbing' : 'grab') : 'default',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center'
+          alignItems: 'center',
+          userSelect: 'none'
         }}
       >
-        <img src={url} style={{ width: '100%', height: 'auto' }} alt="Campus Overlay" />
+        <img 
+          src={url} 
+          style={{ width: '100%', height: 'auto' }} 
+          alt="Campus Overlay" 
+          draggable="false"
+        />
       </div>
     </OverlayView>
   );
@@ -285,6 +326,8 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
               width={overlayWidth} 
               rotation={overlayRotation}
               opacity={isCalibrating ? 0.5 : 1.0} 
+              isCalibrating={isCalibrating}
+              onNudge={nudgeOverlay}
             />
           )}
 
