@@ -1,25 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   APIProvider, 
   Map, 
   AdvancedMarker,
   useMapsLibrary,
-  useMap,
-  OverlayView
+  useMap
 } from '@vis.gl/react-google-maps';
 import { Navigation, MapPin, Sliders } from 'lucide-react';
+
+// Custom OverlayView implementation for @vis.gl/react-google-maps
+const OverlayView = ({ position, children, pane = 'overlayLayer' }) => {
+  const map = useMap();
+  const container = useMemo(() => document.createElement('div'), []);
+
+  useEffect(() => {
+    if (!map || !window.google) return;
+
+    const overlay = new window.google.maps.OverlayView();
+
+    overlay.onAdd = function() {
+      const panes = this.getPanes();
+      panes[pane].appendChild(container);
+    };
+
+    overlay.draw = function() {
+      const projection = this.getProjection();
+      if (!projection) return;
+
+      const point = projection.fromLatLngToDivPixel(new window.google.maps.LatLng(position.lat, position.lng));
+      if (point) {
+        container.style.position = 'absolute';
+        container.style.left = `${point.x}px`;
+        container.style.top = `${point.y}px`;
+        container.style.transform = 'translate(-50%, -50%)'; // Center it
+      }
+    };
+
+    overlay.onRemove = function() {
+      if (container.parentElement) {
+        container.parentElement.removeChild(container);
+      }
+    };
+
+    overlay.setMap(map);
+
+    return () => overlay.setMap(null);
+  }, [map, position, pane, container]);
+
+  return createPortal(children, container);
+};
 
 // Advanced Rotatable Overlay Component
 const CampusOverlay = ({ url, position, width, rotation, opacity = 1.0 }) => {
   return (
-    <OverlayView position={position} pane="overlayLayer">
+    <OverlayView position={position}>
       <div 
         style={{
           transformOrigin: 'center center',
-          transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+          transform: `rotate(${rotation}deg)`,
           width: `${width}px`,
           opacity: opacity,
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
         }}
       >
         <img src={url} style={{ width: '100%', height: 'auto' }} alt="Campus Overlay" />
@@ -146,7 +191,6 @@ const AutoZoom = ({ kioskLocation, destination }) => {
     bounds.extend({ lat: kioskLocation.lat, lng: kioskLocation.lng });
     bounds.extend({ lat: destination.lat, lng: destination.lng });
 
-    // Fit map to show both points with massive padding for maximum campus context
     map.fitBounds(bounds, {
       top: 800,
       right: 800,
@@ -166,8 +210,8 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
 
   // Custom Overlay State
   const overlayUrl = import.meta.env.VITE_CAMPUS_OVERLAY_URL;
-  const [overlayWidth, setOverlayWidth] = useState(2500); // Default width in pixels
-  const [overlayRotation, setOverlayRotation] = useState(0); // Default rotation in degrees
+  const [overlayWidth, setOverlayWidth] = useState(2500);
+  const [overlayRotation, setOverlayRotation] = useState(0);
   const [overlayPos, setOverlayPos] = useState({ lat: 43.5309, lng: -80.2285 });
 
   const handleMapClick = (e) => {
@@ -189,14 +233,13 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
   const toggle3D = () => {
     const next3D = !is3D;
     setIs3D(next3D);
-    // If turning on 3D, automatically switch to satellite for the "Google Earth" effect
     if (next3D) {
       setMapTypeId('satellite');
     }
   };
 
   return (
-    <div className="w-full h-full bg-slate-900 relative">
+    <div className="w-full h-full bg-slate-900 relative text-slate-100 font-sans">
       <APIProvider apiKey={API_KEY}>
         <Map
           defaultCenter={{ lat: 43.5309, lng: -80.2285 }}
@@ -220,13 +263,9 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
             />
           )}
 
-          {/* Real-time Directions with Marching Ants */}
           <Directions from={kioskLocation} to={destination} onRouteUpdate={onRouteUpdate} />
-
-          {/* Auto-zoom when destination changes */}
           <AutoZoom kioskLocation={kioskLocation} destination={destination} />
 
-          {/* Kiosk Marker Overlay */}
           <AdvancedMarker position={{ lat: kioskLocation.lat, lng: kioskLocation.lng }}>
             <div className="relative transform -translate-y-4">
               <div className={`p-4 rounded-full bg-blue-600 shadow-2xl border-4 border-white ${isCalibrating ? 'animate-bounce' : 'animate-pulse'}`}>
@@ -238,7 +277,6 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
             </div>
           </AdvancedMarker>
 
-          {/* Destination Marker Overlay */}
           {destination && (
             <AdvancedMarker position={{ lat: destination.lat, lng: destination.lng }}>
               <div className="relative transform -translate-y-4">
@@ -255,7 +293,6 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
       </APIProvider>
 
       <div className="absolute bottom-12 right-12 z-50 flex flex-col gap-6">
-        {/* Alignment Calibration Panel - Only visible when Calibrating */}
         {isCalibrating && overlayUrl && (
           <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-[40px] shadow-3xl border border-white/10 w-[450px] mb-6 animate-in slide-in-from-bottom-10 fade-in duration-500">
             <div className="flex items-center gap-4 mb-8">
@@ -269,7 +306,6 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
             </div>
 
             <div className="space-y-10">
-              {/* Rotation Slider */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center px-1">
                   <label className="text-slate-300 font-black text-xs uppercase tracking-widest">Rotation Angle</label>
@@ -282,7 +318,6 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
                 />
               </div>
 
-              {/* Size Slider */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center px-1">
                   <label className="text-slate-300 font-black text-xs uppercase tracking-widest">Map Scale (Width)</label>
@@ -304,13 +339,12 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           </div>
         )}
 
-        {/* 3D Toggle Button */}
         <button 
           onClick={toggle3D}
           className="bg-slate-900/90 backdrop-blur-xl p-4 rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col gap-2 hover:bg-slate-800 transition-all active:scale-95"
         >
-          <p className="text-center text-xs font-black text-slate-500 uppercase tracking-widest mb-1">VIEW MODE</p>
-          <div className={`px-5 py-2 rounded-xl text-center font-black text-sm uppercase tracking-widest transition-all ${
+          <p className="text-center text-xs font-black text-slate-500 uppercase tracking-widest mb-1 font-sans">VIEW MODE</p>
+          <div className={`px-5 py-2 rounded-xl text-center font-black text-sm uppercase tracking-widest transition-all font-sans ${
             is3D ? 'bg-primary text-white' : 'bg-slate-700 text-slate-300'
           }`}>
             {is3D ? '3D VIEW' : '2D VIEW'}
@@ -321,8 +355,8 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           onClick={toggleMapType}
           className="bg-slate-900/90 backdrop-blur-xl p-4 rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col gap-2 hover:bg-slate-800 transition-all active:scale-95"
         >
-          <p className="text-center text-xs font-black text-slate-500 uppercase tracking-widest mb-1">MAP TYPE</p>
-          <div className={`px-5 py-2 rounded-xl text-center font-black text-sm uppercase tracking-widest transition-all ${
+          <p className="text-center text-xs font-black text-slate-500 uppercase tracking-widest mb-1 font-sans">MAP TYPE</p>
+          <div className={`px-5 py-2 rounded-xl text-center font-black text-sm uppercase tracking-widest transition-all font-sans ${
             mapTypeId === 'satellite' ? 'bg-primary text-white' : 'bg-slate-700 text-slate-300'
           }`}>
             {mapTypeId === 'satellite' ? 'SATELLITE' : 'STANDARD'}
