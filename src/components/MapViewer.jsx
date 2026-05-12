@@ -1,30 +1,31 @@
-import React, { useState, useEffect } from 'react';
 import { 
   APIProvider, 
   Map, 
   AdvancedMarker,
   useMapsLibrary,
-  useMap
+  useMap,
+  OverlayView,
+  MapCanvasProjection
 } from '@vis.gl/react-google-maps';
-import { Navigation, MapPin } from 'lucide-react';
+import { Navigation, MapPin, Sliders } from 'lucide-react';
 
-// Component to overlay a custom campus map image
-const CampusOverlay = ({ url, bounds, opacity = 1.0 }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || !url || !bounds || !window.google) return;
-
-    const overlay = new window.google.maps.GroundOverlay(url, bounds, {
-      clickable: false,
-      opacity: opacity
-    });
-
-    overlay.setMap(map);
-    return () => overlay.setMap(null);
-  }, [map, url, bounds, opacity]);
-
-  return null;
+// Advanced Rotatable Overlay Component
+const CampusOverlay = ({ url, position, width, rotation, opacity = 1.0 }) => {
+  return (
+    <OverlayView position={position} pane="overlayLayer">
+      <div 
+        style={{
+          transformOrigin: 'center center',
+          transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+          width: `${width}px`,
+          opacity: opacity,
+          pointerEvents: 'none'
+        }}
+      >
+        <img src={url} style={{ width: '100%', height: 'auto' }} alt="Campus Overlay" />
+      </div>
+    </OverlayView>
+  );
 };
 
 // Custom animated polyline for the "marching ants" effect
@@ -163,16 +164,11 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
   const [mapTypeId, setMapTypeId] = useState('roadmap'); 
   const [is3D, setIs3D] = useState(false);
 
+  // Custom Overlay State
   const overlayUrl = import.meta.env.VITE_CAMPUS_OVERLAY_URL;
-  
-  // Define the geographic area where your custom map image will be "pinned"
-  // These coordinates cover the main U of Guelph campus area
-  const CAMPUS_BOUNDS = {
-    north: 43.5385,
-    south: 43.5220,
-    east: -80.2150,
-    west: -80.2370,
-  };
+  const [overlayWidth, setOverlayWidth] = useState(2500); // Default width in pixels
+  const [overlayRotation, setOverlayRotation] = useState(0); // Default rotation in degrees
+  const [overlayPos, setOverlayPos] = useState({ lat: 43.5309, lng: -80.2285 });
 
   const handleMapClick = (e) => {
     if (!isCalibrating) return;
@@ -213,11 +209,13 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
           disableDefaultUI={true}
           gestureHandling={isCalibrating ? 'none' : 'greedy'}
         >
-          {/* Custom Campus Map Overlay - Becomes 50% transparent during calibration for alignment */}
+          {/* Advanced Rotatable Campus Overlay */}
           {overlayUrl && (
             <CampusOverlay 
               url={overlayUrl} 
-              bounds={CAMPUS_BOUNDS} 
+              position={overlayPos} 
+              width={overlayWidth} 
+              rotation={overlayRotation}
               opacity={isCalibrating ? 0.5 : 1.0} 
             />
           )}
@@ -257,6 +255,55 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, isCalibrating
       </APIProvider>
 
       <div className="absolute bottom-12 right-12 z-50 flex flex-col gap-6">
+        {/* Alignment Calibration Panel - Only visible when Calibrating */}
+        {isCalibrating && overlayUrl && (
+          <div className="bg-slate-900/95 backdrop-blur-2xl p-8 rounded-[40px] shadow-3xl border border-white/10 w-[450px] mb-6 animate-in slide-in-from-bottom-10 fade-in duration-500">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="bg-amber-500/20 p-3 rounded-2xl">
+                <Sliders className="w-6 h-6 text-amber-500" />
+              </div>
+              <div>
+                <h3 className="text-white font-black text-xl uppercase tracking-wider">Map Alignment</h3>
+                <p className="text-slate-400 text-sm font-bold">Match your map to the world</p>
+              </div>
+            </div>
+
+            <div className="space-y-10">
+              {/* Rotation Slider */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-slate-300 font-black text-xs uppercase tracking-widest">Rotation Angle</label>
+                  <span className="bg-amber-500 text-slate-900 px-3 py-1 rounded-lg font-black text-xs">{overlayRotation}°</span>
+                </div>
+                <input 
+                  type="range" min="-180" max="180" value={overlayRotation}
+                  onChange={(e) => setOverlayRotation(parseInt(e.target.value))}
+                  className="w-full h-3 bg-slate-800 rounded-full appearance-none cursor-pointer accent-amber-500"
+                />
+              </div>
+
+              {/* Size Slider */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-slate-300 font-black text-xs uppercase tracking-widest">Map Scale (Width)</label>
+                  <span className="bg-blue-500 text-white px-3 py-1 rounded-lg font-black text-xs">{overlayWidth}px</span>
+                </div>
+                <input 
+                  type="range" min="1000" max="8000" value={overlayWidth}
+                  onChange={(e) => setOverlayWidth(parseInt(e.target.value))}
+                  className="w-full h-3 bg-slate-800 rounded-full appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="mt-10 p-4 bg-slate-800/50 rounded-2xl border border-white/5">
+              <p className="text-slate-400 text-xs font-bold leading-relaxed">
+                <span className="text-amber-500">TIP:</span> Use the Rotation slider first to align Gordon St, then use Scale to match the building sizes.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* 3D Toggle Button */}
         <button 
           onClick={toggle3D}
