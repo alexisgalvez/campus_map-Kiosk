@@ -6,41 +6,50 @@ This guide explains how to connect your campus building data to a Google Sheet s
 
 ## 1. Setup Your Spreadsheet
 1. Create a new **Google Sheet**.
-2. Set up the **Header Row** (Row 1) with these exact names:
-   - `id` (The building ID, e.g., 101)
-   - `name` (The building name, e.g., Animal Science)
-   - `category` (academic, residence, services, or admin)
-   - `lat` (Latitude coordinate)
-   - `lng` (Longitude coordinate)
-   - `entrances` (Number of entrances)
-3. Fill in your building data. 
+2. Create two tabs (sheets) at the bottom: `Buildings` and `KioskSettings`.
 
-> [!IMPORTANT]
-> The `id` in your sheet MUST match the `id` you use in your CorelDraw SVG (e.g., if the sheet says `id` is `101`, the CorelDraw shape must be `bld-101`).
+### **Quick Setup (Copy & Paste Headers)**
+To save time, you can copy the following lines and paste them into cell **A1** of each tab. Google Sheets will automatically split them into columns.
+
+**For the `Buildings` tab (Row 1):**
+`id	name	category	lat	lng	entrances	description	has_360	pano_lat	pano_lng	pano_heading`
+
+**For the `KioskSettings` tab (Row 1):**
+`Key	Value	Description`
 
 ---
 
-## 2. Publish as CSV
-To allow the kiosk to read your data, you must publish it to the web:
+## 2. Fill in Your Data
+### **Buildings Tab**
+- `id`: Must match CorelDraw (e.g., `101`).
+- `category`: academic, residence, services, or admin.
+- `description`: Text for the building tooltip.
+- `has_360`: Set to `TRUE` to enable the 360° Panorama button.
+
+### **KioskSettings Tab**
+Use this for global app settings like `app_title`, `admin_pin`, and map calibration (`overlay_rotation`, `overlay_width`).
+
+---
+
+## 3. Publish as CSV
+To allow the kiosk to read your data, you must publish **each tab** separately:
 
 1. In Google Sheets, go to **File > Share > Publish to web**.
-2. Change the settings from "Entire Document" to your specific sheet name (e.g., "Sheet1").
+2. **Tab 1:** Select `Buildings` from the dropdown.
 3. Change "Web Page" to **Comma-separated values (.csv)**.
-4. Click **Publish**.
-5. **Copy the URL** provided. It should look something like this:
-   `https://docs.google.com/spreadsheets/d/e/.../pub?output=csv`
+4. Click **Publish** and copy the URL.
+5. **Tab 2:** Repeat the process for the `KioskSettings` tab and copy that URL as well.
 
 ---
 
-## 3. Connect to the Kiosk
-Once you have the link:
-1. Provide the link to your AI Assistant.
-2. I will update the `MapViewer.jsx` to fetch this URL every time the app starts.
+## 4. Connect to the Kiosk
+1. Provide both CSV links to your AI Assistant.
+2. I will update the application to fetch both sheets dynamically.
 3. Your changes in the Sheet will reflect on the Kiosk after a refresh!
 
 ---
 
-## 4. Troubleshooting
-- **Data not showing?** Make sure you didn't leave any empty rows at the top.
-- **Coordinates wrong?** Ensure you are using decimal coordinates (e.g., `43.5305`) and not degrees/minutes/seconds.
-- **Auto-Sync:** Google Sheets usually takes about 1-5 minutes to push your changes to the public CSV link after you edit a cell.
+## 5. Troubleshooting
+- **Data not showing?** Ensure you published as **CSV**, not a Web Page.
+- **Auto-Sync:** Google Sheets usually takes 1-5 minutes to update the public link after you edit a cell.
+

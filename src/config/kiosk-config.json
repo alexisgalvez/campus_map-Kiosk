@@ -1,11 +1,15 @@
 {
   "overlay": {
-    "position": { "lat": 43.5309, "lng": -80.2285 },
+    "position": {
+      "lat": 43.5309,
+      "lng": -80.2285
+    },
     "width": 2500,
-    "rotation": 0
+    "rotation": -48
   },
   "kiosk": {
     "lat": 43.5309,
     "lng": -80.2285
-  }
+  },
+  "locations": {}
 }
