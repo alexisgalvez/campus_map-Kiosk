@@ -58,8 +58,17 @@ To check if you did it right:
 
 ---
 
-## 5. Next Steps
-Once you have the SVG:
-1. Upload it here.
-2. I will replace the "Layered Map" with your **Smart SVG**.
-3. I will align it using two anchor points so it sits perfectly on the Google Map.
+---
+
+## 6. Scaling & Alignment Tips
+To make the import seamless, follow these sizing rules:
+
+1. **Use Pixels as Units:** Change your document units in CorelDraw to **Pixels**.
+2. **Match Screenshot Resolution:** If your capture was 3000x3000px, set your Page Size to **3000x3000px**.
+3. **No Margins:** Ensure your canvas edges align exactly with the edges of your screenshot.
+4. **Identify Two Anchor Points:**
+   - Pick two distant building corners.
+   - Note their **X/Y coordinates** in CorelDraw.
+   - Find their **Lat/Lng** in Google Maps.
+   - *Provide these to the AI assistant for perfect alignment.*
+5. **ViewBox:** Ensure the "ViewBox" option is enabled in the SVG export dialog.
