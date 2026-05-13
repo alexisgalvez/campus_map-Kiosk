@@ -58,7 +58,7 @@ const mockLocations = [
   { id: '403', name: 'McLaughlin Library', category: 'academic', icon: BookOpen, lat: 43.5312, lng: -80.2275 },
 ];
 
-const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, routeInfo, kioskLocation, locationOverrides = {} }) => {
+const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, routeInfo, kioskLocation, locationOverrides = {}, is3D, setIs3D }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearchChange = (e) => {
@@ -128,7 +128,10 @@ const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, routeInfo, ki
                         {destination.category}
                       </span>
                     </div>
-                    <button onClick={() => setDestination(null)} className="p-3 bg-slate-700 rounded-2xl hover:bg-slate-600 transition-colors">
+                    <button onClick={() => {
+                      setDestination(null);
+                      if (setIs3D) setIs3D(false);
+                    }} className="p-3 bg-slate-700 rounded-2xl hover:bg-slate-600 transition-colors">
                       <X className="w-8 h-8" />
                     </button>
                   </div>
@@ -146,7 +149,7 @@ const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, routeInfo, ki
                     </div>
                   )}
 
-                  <button className="w-full bg-primary hover:bg-red-600 text-white font-black py-7 px-8 rounded-2xl text-3xl flex items-center justify-center gap-4 transition-all shadow-xl">
+                  <button onClick={() => setIs3D(true)} className="w-full bg-primary hover:bg-red-600 text-white font-black py-7 px-8 rounded-2xl text-3xl flex items-center justify-center gap-4 transition-all shadow-xl">
                     <Navigation className="w-10 h-10" />
                     START NAVIGATION
                   </button>
@@ -173,6 +176,7 @@ const Sidebar = ({ isOpen, setIsOpen, destination, setDestination, routeInfo, ki
                     onClick={() => {
                       setDestination(loc);
                       setSearchTerm('');
+                      if (setIs3D) setIs3D(false); // Reset 3D view when choosing a new building to show 2D overview first
                     }}
                     className="w-full text-left bg-slate-800/40 hover:bg-slate-800 p-7 rounded-3xl border border-slate-800 hover:border-slate-600 transition-all flex items-center gap-6 group relative overflow-hidden"
                   >

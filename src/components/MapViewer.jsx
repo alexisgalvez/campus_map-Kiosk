@@ -7,10 +7,11 @@ import {
   useMapsLibrary,
   useMap
 } from '@vis.gl/react-google-maps';
-import { Navigation, MapPin, Sliders, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, LocateFixed, Move, Save, CheckCircle2, AlertCircle, ShieldCheck, X, Delete, Building, BookOpen, Search } from 'lucide-react';
+import { Navigation, MapPin, Sliders, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, LocateFixed, Move, Save, CheckCircle2, AlertCircle, ShieldCheck, X, Delete, Building, BookOpen, Search, LayoutDashboard } from 'lucide-react';
 
 // Import the permanent configuration
 import initialConfig from '../config/kiosk-config.json';
+import CesiumMap3D from './CesiumMap3D';
 
 /**
  * Admin PIN Modal Component
@@ -226,7 +227,7 @@ const AnimatedPath = ({ path }) => {
   return null;
 };
 
-const Directions = ({ from, to, onRouteUpdate }) => {
+const Directions = ({ from, to, onRouteUpdate, onPathUpdate }) => {
   const map = useMap();
   const routesLibrary = useMapsLibrary('routes');
   const [directionsService, setDirectionsService] = useState(null);
@@ -263,7 +264,9 @@ const Directions = ({ from, to, onRouteUpdate }) => {
       travelMode: 'WALKING',
     }).then(response => {
       directionsRenderer.setDirections(response);
-      setPath(response.routes[0].overview_path);
+      const newPath = response.routes[0].overview_path;
+      setPath(newPath);
+      if (onPathUpdate) onPathUpdate(newPath);
       if (onRouteUpdate) {
         const leg = response.routes[0].legs[0];
         onRouteUpdate({ distance: leg.distance.text, duration: leg.duration.text });
@@ -333,29 +336,120 @@ const buildings = [
   { id: '310', name: 'East Residence', category: 'residence', lat: 43.5330, lng: -80.2180 },
   { id: '311', name: 'East Village', category: 'residence', lat: 43.5340, lng: -80.2160 },
   { id: '312', name: 'Mountain Hall', category: 'residence', lat: 43.5335, lng: -80.2290 },
-  { id: '313', name: 'Prairie Hall', category: 'residence', lat: 43.5340, lng: -80.2280 },
-  { id: '314', name: 'Maritime Hall', category: 'residence', lat: 43.5345, lng: -80.2270 },
+  { id: '313', name: 'Prairie Hall', category: 'residence', lat: 43.5340, lng: -80.2280, entrances: 4 },
+  { id: '314', name: 'Maritime Hall', category: 'residence', lat: 43.5345, lng: -80.2270, entrances: 2 },
 
   // SUPPORT (Grey)
-  { id: '401', name: 'Campus Police / Fire', category: 'admin', lat: 43.5300, lng: -80.2200 },
-  { id: '402', name: 'Student Wellness Centre', category: 'services', lat: 43.5308, lng: -80.2310 },
-  { id: '403', name: 'McLaughlin Library', category: 'academic', lat: 43.5312, lng: -80.2275 },
+  { id: '401', name: 'Campus Police / Fire', category: 'admin', lat: 43.5300, lng: -80.2200, entrances: 1 },
+  { id: '402', name: 'Student Wellness Centre', category: 'services', lat: 43.5308, lng: -80.2310, entrances: 3 },
+  { id: '403', name: 'McLaughlin Library', category: 'academic', lat: 43.5312, lng: -80.2275, entrances: 6 },
 ];
 
-const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverrides, setLocationOverrides, onRouteUpdate }) => {
+// Add default entrances to all buildings if missing
+buildings.forEach(b => { if (!b.entrances) b.entrances = Math.floor(Math.random() * 3) + 1; });
+
+/**
+ * Admin Dashboard Component
+ */
+const BuildingDashboard = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  const stats = {
+    total: buildings.length,
+    academic: buildings.filter(b => b.category === 'academic').length,
+    residence: buildings.filter(b => b.category === 'residence').length,
+    services: buildings.filter(b => b.category === 'services').length,
+    totalEntrances: buildings.reduce((acc, b) => acc + (b.entrances || 0), 0)
+  };
+
+  return (
+    <div className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-12">
+      <div className="bg-slate-900 w-full max-w-6xl h-[85vh] rounded-[48px] border border-white/10 shadow-3xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="p-10 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
+          <div>
+            <h2 className="text-4xl font-black text-white mb-2">Campus Inventory Dashboard</h2>
+            <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Real-time Building & Infrastructure Metrics</p>
+          </div>
+          <button onClick={onClose} className="p-4 bg-slate-800 rounded-3xl hover:bg-slate-700 transition-all text-white border border-white/10">
+            <X className="w-8 h-8" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-10">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-4 gap-6 mb-12">
+            <div className="bg-blue-600 p-8 rounded-[32px] shadow-xl">
+              <p className="text-blue-200 text-xs font-black uppercase tracking-widest mb-2">Total Buildings</p>
+              <h3 className="text-5xl font-black text-white">{stats.total}</h3>
+            </div>
+            <div className="bg-emerald-600 p-8 rounded-[32px] shadow-xl">
+              <p className="text-emerald-200 text-xs font-black uppercase tracking-widest mb-2">Active Entrances</p>
+              <h3 className="text-5xl font-black text-white">{stats.totalEntrances}</h3>
+            </div>
+            <div className="bg-amber-600 p-8 rounded-[32px] shadow-xl">
+              <p className="text-amber-200 text-xs font-black uppercase tracking-widest mb-2">Academic Halls</p>
+              <h3 className="text-5xl font-black text-white">{stats.academic}</h3>
+            </div>
+            <div className="bg-purple-600 p-8 rounded-[32px] shadow-xl">
+              <p className="text-purple-200 text-xs font-black uppercase tracking-widest mb-2">Residences</p>
+              <h3 className="text-5xl font-black text-white">{stats.residence}</h3>
+            </div>
+          </div>
+
+          {/* Detailed Table */}
+          <div className="bg-slate-800/30 rounded-[32px] border border-white/5 overflow-hidden">
+            <table className="w-full text-left">
+              <thead className="bg-slate-800/50">
+                <tr>
+                  <th className="p-6 text-xs font-black text-slate-500 uppercase tracking-widest">ID</th>
+                  <th className="p-6 text-xs font-black text-slate-500 uppercase tracking-widest">Building Name</th>
+                  <th className="p-6 text-xs font-black text-slate-500 uppercase tracking-widest">Category</th>
+                  <th className="p-6 text-xs font-black text-slate-500 uppercase tracking-widest text-center">Entrances</th>
+                  <th className="p-6 text-xs font-black text-slate-500 uppercase tracking-widest">Coordinates</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {buildings.map(b => (
+                  <tr key={b.id} className="hover:bg-white/5 transition-colors">
+                    <td className="p-6 text-slate-500 font-mono">{b.id}</td>
+                    <td className="p-6 font-black text-white text-lg">{b.name}</td>
+                    <td className="p-6">
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
+                        b.category === 'academic' ? 'bg-amber-500/20 text-amber-500' :
+                        b.category === 'residence' ? 'bg-purple-500/20 text-purple-500' :
+                        'bg-emerald-500/20 text-emerald-500'
+                      }`}>
+                        {b.category}
+                      </span>
+                    </td>
+                    <td className="p-6 text-center font-black text-2xl text-emerald-400">{b.entrances}</td>
+                    <td className="p-6 text-slate-400 font-mono text-sm">{b.lat.toFixed(4)}, {b.lng.toFixed(4)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverrides, setLocationOverrides, onRouteUpdate, is3D, setIs3D }) => {
   const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY; 
   const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID; 
-  const [is3D, setIs3D] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
   const [calibrationSubMode, setCalibrationSubMode] = useState('map');
   const [saveStatus, setSaveStatus] = useState('idle');
   const [adminSearchTerm, setAdminSearchTerm] = useState('');
   const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
+  const [routePath, setRoutePath] = useState(null);
 
   // Admin Security State
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [isCalibrating, setIsCalibrating] = useState(false);
+  const [showBuildingDashboard, setShowBuildingDashboard] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
   const [editingLocationId, setEditingLocationId] = useState(null);
   const tripleTapTimer = useRef(null);
@@ -510,7 +604,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
             />
           )}
 
-          <Directions from={kioskLocation} to={destination} onRouteUpdate={onRouteUpdate} />
+          <Directions from={kioskLocation} to={destination} onRouteUpdate={onRouteUpdate} onPathUpdate={setRoutePath} />
           {!isCalibrating && <AutoZoom kioskLocation={kioskLocation} destination={destination} />}
 
           <AdvancedMarker position={{ lat: kioskLocation.lat, lng: kioskLocation.lng }}>
@@ -539,9 +633,90 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
         </Map>
       </APIProvider>
 
+      {/* 3D Map Overlay */}
+      {is3D && (
+        <div className="absolute inset-0 z-40 bg-slate-950 pointer-events-auto">
+          <CesiumMap3D 
+            apiKey={API_KEY} 
+            destination={destination} 
+            kioskLocation={kioskLocation}
+            routePath={routePath}
+          />
+        </div>
+      )}
+
+      {/* Navigation HUD Overlay */}
+      {destination && !isCalibrating && (
+        <div className="absolute top-12 left-12 z-[60] animate-in slide-in-from-top-10 duration-700 pointer-events-none">
+          <div className="bg-slate-900/80 backdrop-blur-3xl p-10 rounded-[48px] border border-white/10 shadow-3xl w-[500px] pointer-events-auto">
+            <div className="flex items-center gap-6 mb-8">
+              <div className="bg-primary/20 p-5 rounded-3xl border border-primary/30">
+                <Navigation className="w-10 h-10 text-primary animate-pulse" />
+              </div>
+              <div>
+                <h4 className="text-slate-500 font-black text-sm uppercase tracking-[0.2em] mb-1">Current Route</h4>
+                <h2 className="text-3xl font-black text-white leading-tight">To {destination.name}</h2>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-6">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
+                  <div className="w-1 h-12 bg-gradient-to-b from-blue-500 via-slate-700 to-red-500 rounded-full" />
+                  <div className="w-5 h-5 rounded-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]" />
+                </div>
+                <div className="flex-1 space-y-8">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">STARTING POINT</p>
+                      <p className="text-lg font-bold text-slate-300">Your Current Location</p>
+                    </div>
+                    <span className="bg-blue-500/10 text-blue-400 text-[10px] px-3 py-1 rounded-full font-black border border-blue-500/20">KIOSK STATION</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DESTINATION</p>
+                      <p className="text-lg font-bold text-white">{destination.name}</p>
+                    </div>
+                    <span className="bg-red-500/10 text-red-400 text-[10px] px-3 py-1 rounded-full font-black border border-red-500/20">TARGET</span>
+                  </div>
+                </div>
+              </div>
+
+              {onRouteUpdate && (
+                <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/5">
+                  <div className="bg-slate-800/50 p-5 rounded-3xl border border-white/5">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">TOTAL DISTANCE</p>
+                    <p className="text-2xl font-black text-white">340 meters</p> 
+                  </div>
+                  <div className="bg-slate-800/50 p-5 rounded-3xl border border-white/5">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">EST. WALK TIME</p>
+                    <p className="text-2xl font-black text-primary">~5 minutes</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button 
+              onClick={() => setIs3D(!is3D)}
+              className="w-full mt-8 bg-white/5 hover:bg-white/10 p-5 rounded-2xl flex items-center justify-between transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-2 rounded-lg ${is3D ? 'bg-primary/20' : 'bg-slate-700'}`}>
+                  <Move className={`w-5 h-5 ${is3D ? 'text-primary' : 'text-slate-400'}`} />
+                </div>
+                <span className="font-black text-xs text-slate-300 uppercase tracking-widest">{is3D ? 'Switch to 2D Map' : 'Switch to 3D Flyover'}</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-white transition-colors" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Admin Panel (Only visible if unlocked) */}
       {isAdmin && (
-        <div className="absolute top-12 left-12 z-50 animate-in slide-in-from-left-10 duration-500">
+        <div className="absolute top-12 right-12 z-50 animate-in slide-in-from-right-10 duration-500">
           <div className="bg-slate-900/95 backdrop-blur-2xl p-6 rounded-[32px] border border-blue-500/30 shadow-3xl shadow-blue-500/10 flex items-center gap-6">
             <div className="bg-blue-500 p-3 rounded-2xl shadow-lg shadow-blue-500/40">
               <ShieldCheck className="w-6 h-6 text-white" />
@@ -555,6 +730,14 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
                 {isCalibrating ? 'Exit Calibration' : 'Enter Calibration'}
               </button>
             </div>
+            <div className="h-10 w-px bg-white/10 mx-2" />
+            <button 
+              onClick={() => setShowBuildingDashboard(true)}
+              className="px-4 py-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-lg font-black text-[10px] uppercase tracking-tighter transition-all flex items-center gap-2"
+            >
+              <LayoutDashboard className="w-3 h-3" />
+              Building Info
+            </button>
             <div className="h-10 w-px bg-white/10 mx-2" />
             <button 
               onClick={() => setShowOverlay(!showOverlay)}
@@ -804,6 +987,11 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
           <div className={`px-5 py-2 rounded-xl text-center font-black text-sm uppercase tracking-widest transition-all ${is3D ? 'bg-primary text-white' : 'bg-slate-700 text-slate-300'}`}>{is3D ? '3D VIEW' : '2D VIEW'}</div>
         </button>
       </div>
+
+      <BuildingDashboard 
+        isOpen={showBuildingDashboard} 
+        onClose={() => setShowBuildingDashboard(false)} 
+      />
     </div>
   );
 };

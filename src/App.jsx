@@ -11,6 +11,7 @@ function App() {
 
   const [kioskLocation, setKioskLocation] = useState({ lat: 43.5309, lng: -80.2285, name: 'Kiosk Station 1' });
   const [locationOverrides, setLocationOverrides] = useState({});
+  const [is3D, setIs3D] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('kiosk_calibration');
@@ -32,6 +33,8 @@ function App() {
         routeInfo={routeInfo}
         kioskLocation={kioskLocation}
         locationOverrides={locationOverrides}
+        is3D={is3D}
+        setIs3D={setIs3D}
       />
 
       {/* Main Map Area */}
@@ -43,6 +46,8 @@ function App() {
           locationOverrides={locationOverrides}
           setLocationOverrides={setLocationOverrides}
           onRouteUpdate={setRouteInfo}
+          is3D={is3D}
+          setIs3D={setIs3D}
         />
         
 
