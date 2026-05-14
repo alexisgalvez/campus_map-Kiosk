@@ -20,6 +20,9 @@ This tab contains the data for every interactive building on the map.
 | **pano_lat** | (Optional) Exact lat for Street View | `43.5306` |
 | **pano_lng** | (Optional) Exact lng for Street View | `-80.2291` |
 | **pano_heading**| (Optional) Camera direction (0-360) | `180` |
+| **svg_url** | (Optional) Individual building SVG URL | `https://.../101.svg` |
+| **svg_width** | (Optional) Scale for this building | `200` |
+| **svg_rotation**| (Optional) Rotation for this building | `15` |
 
 ---
 
@@ -41,6 +44,7 @@ This tab controls the "Global" look and feel of the app.
 | **primary_color** | `#e62b1e` | Main branding color (Hex) |
 | **tooltips_enabled**| `TRUE` | Global toggle for tooltips |
 | **streetview_on** | `TRUE` | Global toggle for 360° views |
+| **overlay_url** | `https://.../map.png` | The background image URL for the map |
 
 ---
 

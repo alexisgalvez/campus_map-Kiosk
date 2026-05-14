@@ -1,0 +1,6 @@
+id,name,category,lat,lng,entrances,description,has_360,pano_lat,pano_lng,pano_heading
+bld-101,Animal Science,academic,43.5305,-80.2290,2,Home to research labs.,TRUE,43.5306,-80.2291,180
+bld-102,Alexander Hall,academic,43.5310,-80.2295,1,Environmental Sciences building.,FALSE,,,
+bld-103,Crop Science,academic,43.5315,-80.2300,3,Agriculture and crop research.,TRUE,43.5316,-80.2301,90
+bld-301,Johnston Hall,residence,43.5320,-80.2305,4,Main residence building.,TRUE,43.5321,-80.2306,0
+bld-404,University Centre,services,43.5325,-80.2310,6,Hub for student services and dining.,TRUE,43.5326,-80.2311,270

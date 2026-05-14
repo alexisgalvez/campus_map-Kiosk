@@ -1,0 +1,14 @@
+Key,Value,Description
+app_title,Guelph Wayfinder,Main heading in the sidebar
+app_subtitle,Explore with ease,Subheading text
+admin_pin,0307,PIN for the Calibration Suite
+idle_timeout,60,Seconds before app resets
+overlay_lat,43.5309,Center of your SVG map
+overlay_lng,-80.2285,Center of your SVG map
+overlay_width,2500,Scale of the SVG overlay
+overlay_rotation,-48,Rotation angle of the SVG
+kiosk_lat,43.5309,Where the "You are Here" pin sits
+kiosk_lng,-80.2285,Where the "You are Here" pin sits
+primary_color,#e62b1e,Main branding color (Hex)
+tooltips_enabled,TRUE,Global toggle for tooltips
+streetview_on,TRUE,Global toggle for 360° views

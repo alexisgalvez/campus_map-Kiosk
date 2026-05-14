@@ -9,17 +9,17 @@ import {
 } from '@vis.gl/react-google-maps';
 import { Navigation, MapPin, Sliders, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, LocateFixed, Move, Save, CheckCircle2, AlertCircle, ShieldCheck, X, Delete, Building, BookOpen, Search, LayoutDashboard } from 'lucide-react';
 
-// Import the permanent configuration
-import initialConfig from '../config/kiosk-config.json';
+// Remove static config import - now using props from Google Sheets
+// import initialConfig from '../config/kiosk-config.json';
 import CesiumMap3D from './CesiumMap3D';
 
 /**
  * Admin PIN Modal Component
  */
-const AdminPinModal = ({ isOpen, onClose, onUnlock }) => {
+const AdminPinModal = ({ isOpen, onClose, onUnlock, settings }) => {
   const [pin, setPin] = useState('');
   const [isError, setIsError] = useState(false);
-  const correctPin = '0307';
+  const correctPin = String(settings?.admin_pin || '0307');
 
   const handleKeypad = (val) => {
     if (pin.length < 4) {
@@ -92,6 +92,66 @@ const AdminPinModal = ({ isOpen, onClose, onUnlock }) => {
 };
 
 /**
+ * StreetView Virtual Experience Component
+ */
+const StreetViewModal = ({ building, onClose }) => {
+  const panoRef = useRef(null);
+
+  useEffect(() => {
+    if (!panoRef.current || !window.google || !building) return;
+    
+    const pano = new window.google.maps.StreetViewPanorama(panoRef.current, {
+      position: { 
+        lat: parseFloat(building.pano_lat) || building.lat, 
+        lng: parseFloat(building.pano_lng) || building.lng 
+      },
+      pov: { 
+        heading: parseFloat(building.pano_heading) || 0, 
+        pitch: 0 
+      },
+      zoom: 1,
+      addressControl: false,
+      showRoadLabels: false,
+      motionTracking: false,
+      motionTrackingControl: false,
+      panControl: true,
+      zoomControl: true,
+      enableCloseButton: false
+    });
+
+    return () => {
+      // Native cleanup if necessary
+    };
+  }, [building]);
+
+  if (!building) return null;
+
+  return (
+    <div className="fixed inset-0 z-[10000] bg-slate-950 flex flex-col animate-in fade-in duration-500">
+      <div className="p-8 bg-slate-900 border-b border-white/10 flex justify-between items-center shadow-2xl">
+        <div className="flex items-center gap-6">
+          <div className="bg-blue-500/20 p-4 rounded-2xl">
+            <Building className="w-8 h-8 text-blue-400" />
+          </div>
+          <div>
+             <h2 className="text-3xl font-black text-white">{building.name}</h2>
+             <p className="text-slate-400 font-bold uppercase text-xs tracking-[0.3em]">360° Virtual Experience</p>
+          </div>
+        </div>
+        <button 
+          onClick={onClose} 
+          className="group flex items-center gap-3 px-6 py-4 bg-slate-800 rounded-2xl hover:bg-red-500 transition-all text-white font-black uppercase tracking-widest border border-white/5"
+        >
+          <span>Close Tour</span>
+          <X className="w-6 h-6 group-hover:rotate-90 transition-transform" />
+        </button>
+      </div>
+      <div ref={panoRef} className="flex-1" />
+    </div>
+  );
+};
+
+/**
  * Optimized OverlayView
  */
 const OverlayView = ({ position, width, rotation, children, pane = 'overlayLayer' }) => {
@@ -120,7 +180,7 @@ const OverlayView = ({ position, width, rotation, children, pane = 'overlayLayer
         container.style.left = `${pCenter.x}px`;
         container.style.top = `${pCenter.y}px`;
         container.style.width = `${pixelWidth}px`;
-        container.style.zIndex = '1';
+        container.style.zIndex = '1000'; // Higher z-index for the overlay
         container.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
         container.style.transformOrigin = 'center center';
       }
@@ -189,6 +249,8 @@ const CampusOverlay = ({ url, position, width, rotation, opacity = 1.0, isIntera
       >
         <img 
           src={url} 
+          onLoad={() => console.log('Overlay Map Loaded Successfully:', url)}
+          onError={(e) => console.error('Overlay Map Load Failed:', url, e)}
           style={{ width: '100%', height: 'auto', display: 'block' }} 
           alt="Campus Overlay" 
           draggable="false"
@@ -288,70 +350,15 @@ const AutoZoom = ({ kioskLocation, destination }) => {
   return null;
 };
 
-// Master list of buildings for the entire application
-const buildings = [
-  // ACADEMIC & RESEARCH (Yellow)
-  { id: '101', name: 'Animal Science & Nutrition', category: 'academic', lat: 43.5305, lng: -80.2290 },
-  { id: '102', name: 'J.D. MacLachlan Building', category: 'academic', lat: 43.5312, lng: -80.2285 },
-  { id: '103', name: 'Crop Science Building', category: 'academic', lat: 43.5320, lng: -80.2290 },
-  { id: '104', name: 'Richards Building (SOES)', category: 'academic', lat: 43.5315, lng: -80.2295 },
-  { id: '105', name: 'Zavitz Hall', category: 'academic', lat: 43.5322, lng: -80.2275 },
-  { id: '106', name: 'Landscape Architecture', category: 'academic', lat: 43.5318, lng: -80.2265 },
-  { id: '108', name: 'Johnston Hall', category: 'academic', lat: 43.5325, lng: -80.2268 },
-  { id: '111', name: 'MacKinnon Building', category: 'academic', lat: 43.5315, lng: -80.2280 },
-  { id: '112', name: 'Rozanski Hall', category: 'academic', lat: 43.5305, lng: -80.2235 },
-  { id: '113', name: 'Massey Hall', category: 'academic', lat: 43.5315, lng: -80.2268 },
-  { id: '114', name: 'Raithby House', category: 'academic', lat: 43.5318, lng: -80.2272 },
-  { id: '115', name: 'Blackwood Hall', category: 'academic', lat: 43.5308, lng: -80.2245 },
-  { id: '118', name: 'Macdonald Institute', category: 'academic', lat: 43.5305, lng: -80.2305 },
-  { id: '121', name: 'Alexander Hall', category: 'academic', lat: 43.5310, lng: -80.2300 },
-  { id: '122', name: 'Axelrod Building', category: 'academic', lat: 43.5302, lng: -80.2298 },
-  { id: '124', name: 'Reynolds Building', category: 'academic', lat: 43.5310, lng: -80.2258 },
-  { id: '125', name: 'Macleod Institute', category: 'academic', lat: 43.5312, lng: -80.2255 },
-  { id: '141', name: 'Science Complex', category: 'academic', lat: 43.5302, lng: -80.2284 },
-  { id: '142', name: 'Summerlee Science Complex', category: 'academic', lat: 43.5300, lng: -80.2280 },
-  { id: '151', name: 'War Memorial Hall', category: 'academic', lat: 43.5315, lng: -80.2292 },
-  { id: '158', name: 'Thornbrough Building', category: 'academic', lat: 43.5306, lng: -80.2250 },
-  { id: '159', name: 'Bovey Building', category: 'academic', lat: 43.5285, lng: -80.2260 },
-  { id: '160', name: 'Graham Hall', category: 'academic', lat: 43.5305, lng: -80.2255 },
-  { id: '161', name: 'Day Hall', category: 'academic', lat: 43.5310, lng: -80.2248 },
-  { id: '165', name: 'MacNaughton Building', category: 'academic', lat: 43.5305, lng: -80.2290 },
+// Master list of buildings is now passed in via props
+// const buildings = [...];
 
-  // ATHLETICS (Red)
-  { id: '201', name: 'Athletic Centre (Gryphon Centre)', category: 'athletics', lat: 43.5335, lng: -80.2225 },
-  { id: '202', name: 'W.F. Mitchell Athletics Centre', category: 'athletics', lat: 43.5330, lng: -80.2230 },
-  { id: '203', name: 'Alumni Stadium', category: 'athletics', lat: 43.5325, lng: -80.2210 },
-  { id: '204', name: 'Field House', category: 'athletics', lat: 43.5332, lng: -80.2220 },
-
-  // RESIDENCES & FOOD (Blue)
-  { id: '301', name: 'University Centre (UC)', category: 'services', lat: 43.5309, lng: -80.2285 },
-  { id: '302', name: 'Creelman Hall', category: 'services', lat: 43.5328, lng: -80.2255 },
-  { id: '303', name: 'Lennox & Addington Hall', category: 'residence', lat: 43.5360, lng: -80.2245 },
-  { id: '304', name: 'Lambton Hall', category: 'residence', lat: 43.5322, lng: -80.2238 },
-  { id: '305', name: 'Watson Hall', category: 'residence', lat: 43.5300, lng: -80.2315 },
-  { id: '306', name: 'Mills Hall', category: 'residence', icon: Building, lat: 43.5318, lng: -80.2295 },
-  { id: '307', name: 'Johnston Hall (Res)', category: 'residence', lat: 43.5325, lng: -80.2268 },
-  { id: '308', name: 'Maids Hall', category: 'residence', lat: 43.5320, lng: -80.2260 },
-  { id: '309', name: 'Macdonald Hall', category: 'residence', lat: 43.5302, lng: -80.2308 },
-  { id: '310', name: 'East Residence', category: 'residence', lat: 43.5330, lng: -80.2180 },
-  { id: '311', name: 'East Village', category: 'residence', lat: 43.5340, lng: -80.2160 },
-  { id: '312', name: 'Mountain Hall', category: 'residence', lat: 43.5335, lng: -80.2290 },
-  { id: '313', name: 'Prairie Hall', category: 'residence', lat: 43.5340, lng: -80.2280, entrances: 4 },
-  { id: '314', name: 'Maritime Hall', category: 'residence', lat: 43.5345, lng: -80.2270, entrances: 2 },
-
-  // SUPPORT (Grey)
-  { id: '401', name: 'Campus Police / Fire', category: 'admin', lat: 43.5300, lng: -80.2200, entrances: 1 },
-  { id: '402', name: 'Student Wellness Centre', category: 'services', lat: 43.5308, lng: -80.2310, entrances: 3 },
-  { id: '403', name: 'McLaughlin Library', category: 'academic', lat: 43.5312, lng: -80.2275, entrances: 6 },
-];
-
-// Add default entrances to all buildings if missing
-buildings.forEach(b => { if (!b.entrances) b.entrances = Math.floor(Math.random() * 3) + 1; });
+// buildings.forEach(b => { if (!b.entrances) b.entrances = Math.floor(Math.random() * 3) + 1; });
 
 /**
  * Admin Dashboard Component
  */
-const BuildingDashboard = ({ isOpen, onClose }) => {
+const BuildingDashboard = ({ isOpen, onClose, buildings }) => {
   if (!isOpen) return null;
 
   const stats = {
@@ -435,7 +442,20 @@ const BuildingDashboard = ({ isOpen, onClose }) => {
   );
 };
 
-const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverrides, setLocationOverrides, onRouteUpdate, is3D, setIs3D }) => {
+const MapViewer = ({ 
+  destination, 
+  kioskLocation, 
+  setKioskLocation, 
+  locationOverrides, 
+  setLocationOverrides, 
+  onRouteUpdate, 
+  is3D, 
+  setIs3D,
+  buildings = [],
+  settings = {},
+  activePano,
+  setActivePano
+}) => {
   const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY; 
   const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID; 
   const [mapInstance, setMapInstance] = useState(null);
@@ -443,6 +463,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
   const [saveStatus, setSaveStatus] = useState('idle');
   const [adminSearchTerm, setAdminSearchTerm] = useState('');
   const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
+  const [selectedBuildingId, setSelectedBuildingId] = useState(null);
   const [routePath, setRoutePath] = useState(null);
 
   // Admin Security State
@@ -456,26 +477,43 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
   const tapCount = useRef(0);
 
   // Custom Overlay State
-  const overlayUrl = import.meta.env.VITE_CAMPUS_OVERLAY_URL;
-  const [overlayWidth, setOverlayWidth] = useState(initialConfig.overlay.width);
-  const [overlayRotation, setOverlayRotation] = useState(initialConfig.overlay.rotation);
-  const [overlayPos, setOverlayPos] = useState(initialConfig.overlay.position);
+  const overlayUrl = settings?.overlay_url || import.meta.env.VITE_CAMPUS_OVERLAY_URL;
+  console.log('Current Overlay URL:', overlayUrl);
+  const [overlayWidth, setOverlayWidth] = useState(settings?.overlay_width || 500);
+  const [overlayRotation, setOverlayRotation] = useState(settings?.overlay_rotation || 0);
+  const [overlayPos, setOverlayPos] = useState({ 
+    lat: settings?.overlay_lat || 43.5309, 
+    lng: settings?.overlay_lng || -80.2285 
+  });
+
+  // Individual Building Calibration State
+  const [buildingOffsets, setBuildingOffsets] = useState(settings?.building_calibration || {});
 
   useEffect(() => {
     const saved = localStorage.getItem('kiosk_calibration');
     if (saved) {
       const data = JSON.parse(saved);
-      setOverlayPos(data.overlay.position);
-      setOverlayWidth(data.overlay.width);
-      setOverlayRotation(data.overlay.rotation);
-      setKioskLocation(data.kiosk);
-    } else {
-      setOverlayPos(initialConfig.overlay.position);
-      setOverlayWidth(initialConfig.overlay.width);
-      setOverlayRotation(initialConfig.overlay.rotation);
-      setKioskLocation(initialConfig.kiosk);
+      if (data.overlay) {
+        setOverlayPos(data.overlay.position);
+        setOverlayWidth(data.overlay.width);
+        setOverlayRotation(data.overlay.rotation);
+      }
+      if (data.kiosk) setKioskLocation(data.kiosk);
+    } else if (settings) {
+      // Fallback to Google Sheets settings if no local calibration exists
+      if (settings.overlay_lat && settings.overlay_lng) {
+        setOverlayPos({ lat: settings.overlay_lat, lng: settings.overlay_lng });
+      }
+      if (settings.overlay_width) setOverlayWidth(settings.overlay_width);
+      if (settings.overlay_rotation !== undefined) setOverlayRotation(settings.overlay_rotation);
+      if (settings.kiosk_lat && settings.kiosk_lng) {
+        setKioskLocation({ ...kioskLocation, lat: settings.kiosk_lat, lng: settings.kiosk_lng });
+      }
+      if (settings.building_calibration) {
+        setBuildingOffsets(settings.building_calibration);
+      }
     }
-  }, []);
+  }, [settings]);
 
   const handleTripleTap = () => {
     tapCount.current += 1;
@@ -503,6 +541,32 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
     setOverlayPos({ lat: newLatLng.lat(), lng: newLatLng.lng() });
   };
 
+  const nudgeBuilding = (id, dx, dy) => {
+    if (!mapInstance || !window.google) return;
+    const current = buildingOffsets[id] || { lat: 0, lng: 0, scale: 500, rotation: 0 };
+    const projection = mapInstance.getProjection();
+    if (!projection) return;
+    
+    // Find building base coords from spreadsheet
+    const building = buildings.find(b => b.id === id);
+    if (!building) return;
+
+    const baseLatLng = new window.google.maps.LatLng(building.lat + (current.lat_off || 0), building.lng + (current.lng_off || 0));
+    const worldPoint = projection.fromLatLngToPoint(baseLatLng);
+    const scale = Math.pow(2, mapInstance.getZoom());
+    const newWorldPoint = new window.google.maps.Point(worldPoint.x + dx / scale, worldPoint.y + dy / scale);
+    const newLatLng = projection.fromPointToLatLng(newWorldPoint);
+    
+    setBuildingOffsets(prev => ({
+      ...prev,
+      [id]: {
+        ...current,
+        lat_off: newLatLng.lat() - building.lat,
+        lng_off: newLatLng.lng() - building.lng
+      }
+    }));
+  };
+
   const handleMapClick = (e) => {
     if (!isCalibrating) return;
     
@@ -520,7 +584,8 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
     const configData = {
       overlay: { position: overlayPos, width: overlayWidth, rotation: overlayRotation },
       kiosk: kioskLocation,
-      locations: locationOverrides
+      locations: locationOverrides,
+      building_calibration: buildingOffsets
     };
     setSaveStatus('saving');
     localStorage.setItem('kiosk_calibration', JSON.stringify(configData));
@@ -569,6 +634,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
       <AdminPinModal 
         isOpen={showPinModal} 
         onClose={() => setShowPinModal(false)}
+        settings={settings}
         onUnlock={() => {
           setShowPinModal(false);
           setIsAdmin(true);
@@ -581,7 +647,7 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
           defaultZoom={17}
           mapId={mapId}
           mapTypeId="roadmap" 
-          styles={mapStyles}
+          styles={mapId ? [] : mapStyles}
           tilt={is3D ? 67.5 : 0}
           heading={is3D ? 45 : 0}
           onClick={handleMapClick}
@@ -607,7 +673,52 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
           <Directions from={kioskLocation} to={destination} onRouteUpdate={onRouteUpdate} onPathUpdate={setRoutePath} />
           {!isCalibrating && <AutoZoom kioskLocation={kioskLocation} destination={destination} />}
 
-          <AdvancedMarker position={{ lat: kioskLocation.lat, lng: kioskLocation.lng }}>
+          {/* Individual Building Overlays */}
+          {buildings.filter(b => !isNaN(b.lat) && !isNaN(b.lng)).map(b => {
+            const offset = buildingOffsets[b.id];
+            // Only show if offset exists OR we are in admin mode for this building
+            if (!offset && (!isCalibrating || calibrationSubMode !== 'locations' || selectedBuildingId !== b.id)) return null;
+            
+            return (
+              <CampusOverlay 
+                key={`b-overlay-${b.id}`}
+                url={`/buildings/${b.id}.svg`}
+                position={{ 
+                  lat: b.lat + (offset?.lat_off || 0), 
+                  lng: b.lng + (offset?.lng_off || 0) 
+                }}
+                width={offset?.scale || 500}
+                rotation={offset?.rotation || 0}
+                opacity={isCalibrating && selectedBuildingId === b.id ? 0.8 : 1.0}
+                isInteractive={isCalibrating && calibrationSubMode === 'locations' && selectedBuildingId === b.id}
+                onNudge={(dx, dy) => nudgeBuilding(b.id, dx, dy)}
+                pane={isCalibrating && selectedBuildingId === b.id ? 'overlayMouseTarget' : 'mapPane'}
+              />
+            );
+          })}
+
+          {/* Dynamic Building Tooltips/Markers */}
+          {settings.tooltips_enabled && !destination && !isCalibrating && buildings.filter(b => !isNaN(b.lat) && !isNaN(b.lng)).map(b => (
+            <AdvancedMarker 
+              key={b.id} 
+              position={{ lat: b.lat, lng: b.lng }}
+              onClick={() => {
+                // In a real app, maybe trigger a small tooltip or select the building
+              }}
+            >
+              <div className="group relative flex flex-col items-center">
+                <div className="w-4 h-4 bg-slate-400 rounded-full border-2 border-white shadow-lg group-hover:bg-primary group-hover:scale-150 transition-all duration-300" />
+                <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <div className="bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 shadow-2xl">
+                    <p className="text-white font-bold text-sm whitespace-nowrap">{b.name}</p>
+                  </div>
+                </div>
+              </div>
+            </AdvancedMarker>
+          ))}
+
+          {!isNaN(kioskLocation.lat) && !isNaN(kioskLocation.lng) && (
+            <AdvancedMarker position={{ lat: kioskLocation.lat, lng: kioskLocation.lng }}>
             <div className="relative transform -translate-y-4">
               <div className={`p-4 rounded-full bg-blue-600 shadow-2xl border-4 border-white ${isCalibrating && calibrationSubMode === 'kiosk' ? 'animate-bounce' : 'animate-pulse'}`}>
                 <Navigation className="w-8 h-8 text-white fill-white rotate-45" />
@@ -617,8 +728,9 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
               </div>
             </div>
           </AdvancedMarker>
+          )}
 
-          {destination && (
+          {destination && !isNaN(destination.lat) && !isNaN(destination.lng) && (
             <AdvancedMarker position={{ lat: destination.lat, lng: destination.lng }}>
               <div className="relative transform -translate-y-4">
                 <div className="p-4 rounded-full bg-primary shadow-2xl border-4 border-white animate-bounce">
@@ -991,7 +1103,16 @@ const MapViewer = ({ destination, kioskLocation, setKioskLocation, locationOverr
       <BuildingDashboard 
         isOpen={showBuildingDashboard} 
         onClose={() => setShowBuildingDashboard(false)} 
+        buildings={buildings}
       />
+
+      {/* 360 Virtual Experience Modal */}
+      {activePano && (
+        <StreetViewModal 
+          building={activePano} 
+          onClose={() => setActivePano(null)} 
+        />
+      )}
     </div>
   );
 };
